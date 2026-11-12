@@ -67,7 +67,7 @@ export async function getList(req, res) {
       q,
     });
   } catch (err) {
-    return res.status(500).send('Erro ao listar consultas: ' + err.message);
+    return res.status(500).send('Não foi possível concluir a operação. Tente novamente.');
   }
 }
 
@@ -80,7 +80,7 @@ export async function getCreate(req, res) {
       editing: false,
     });
   } catch (err) {
-    return res.status(500).send('Erro ao carregar formulário: ' + err.message);
+    return res.status(500).send('Não foi possível concluir a operação. Tente novamente.');
   }
 }
 
@@ -126,7 +126,7 @@ export async function getEdit(req, res) {
       editing: true,
     });
   } catch (err) {
-    return res.status(500).send('Erro ao carregar consulta: ' + err.message);
+    return res.status(500).send('Não foi possível concluir a operação. Tente novamente.');
   }
 }
 

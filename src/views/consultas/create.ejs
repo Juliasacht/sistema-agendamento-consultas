@@ -9,6 +9,7 @@
   <p class="subtitle">O status Cancelada libera o horário e mantém o registro. Para reativar, escolha Agendada ou Confirmada. Consultas finalizadas permitem editar apenas observações.</p>
 
   <form method="post" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
     <div class="form-group">
       <label for="data">Data*</label>
       <input type="date" id="data" name="data" required value="<%= form.data || '' %>" />

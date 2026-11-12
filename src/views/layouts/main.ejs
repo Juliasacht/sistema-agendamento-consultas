@@ -47,7 +47,10 @@
       </nav>
 
       <% if (admin) { %>
-        <a href="/admin/logout" class="logout-icon" title="Sair">Sair</a>
+        <form method="post" action="/admin/logout" class="inline-action">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+          <button type="submit" class="logout-icon logout-button" title="Sair">Sair</button>
+        </form>
       <% } %>
     </div>
   </header>

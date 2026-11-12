@@ -36,6 +36,6 @@ export async function getDashboard(req, res) {
       stats: { totalPacientes, totalMedicos, consultasHoje },
     });
   } catch (err) {
-    return res.status(500).send('Erro ao carregar dashboard: ' + err.message);
+    return res.status(500).send('Não foi possível concluir a operação. Tente novamente.');
   }
 }

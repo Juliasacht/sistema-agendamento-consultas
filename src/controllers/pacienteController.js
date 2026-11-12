@@ -1,3 +1,4 @@
+import { databaseError } from '../utils/databaseError.js';
 import {
   createPaciente,
   listPacientes,
@@ -30,7 +31,8 @@ export async function getList(req, res) {
       q: req.query.q || '',
     });
   } catch (err) {
-    return res.status(500).send('Erro ao listar pacientes: ' + err.message);
+    const failure = databaseError(err);
+    return res.status(failure.status).send(failure.message);
   }
 }
 
@@ -62,13 +64,12 @@ export async function postCreate(req, res) {
     await createPaciente(form);
     return res.redirect('/pacientes');
   } catch (err) {
-    let msg = err.message;
-    if (msg.includes('Duplicate') && msg.includes('cpf')) msg = 'CPF já cadastrado.';
+    const failure = databaseError(err, 'CPF');
 
-    return res.status(400).render('pacientes/create', {
+    return res.status(failure.status).render('pacientes/create', {
       title: 'Cadastrar Paciente',
       active: 'pacientes',
-      errors: { geral: msg },
+      errors: { geral: failure.message },
       form,
       editing: false,
     });
@@ -91,7 +92,8 @@ export async function getEdit(req, res) {
       editing: true,
     });
   } catch (err) {
-    return res.status(500).send('Erro ao carregar paciente: ' + err.message);
+    const failure = databaseError(err);
+    return res.status(failure.status).send(failure.message);
   }
 }
 
@@ -114,13 +116,12 @@ export async function postEdit(req, res) {
     await updatePaciente(id, form);
     return res.redirect('/pacientes');
   } catch (err) {
-    let msg = err.message;
-    if (msg.includes('Duplicate') && msg.includes('cpf')) msg = 'CPF já cadastrado.';
+    const failure = databaseError(err, 'CPF');
 
-    return res.status(400).render('pacientes/create', {
+    return res.status(failure.status).render('pacientes/create', {
       title: 'Editar Paciente',
       active: 'pacientes',
-      errors: { geral: msg },
+      errors: { geral: failure.message },
       form,
       editing: true,
     });
@@ -132,6 +133,7 @@ export async function getDelete(req, res) {
     await deletePaciente(req.params.id);
     return res.redirect('/pacientes');
   } catch (err) {
-    return res.status(500).send('Erro ao excluir paciente: ' + err.message);
+    const failure = databaseError(err);
+    return res.status(failure.status).send(failure.message);
   }
 }

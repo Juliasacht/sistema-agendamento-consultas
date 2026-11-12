@@ -6,6 +6,7 @@
   <% } %>
 
   <form method="post" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
     <div class="form-group">
       <label>Nome*</label>
       <input type="text" name="nome" value="<%= form.nome || '' %>" />

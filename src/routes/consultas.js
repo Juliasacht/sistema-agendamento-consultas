@@ -1,3 +1,4 @@
+import { asyncHandler } from '../middlewares/security.js';
 import { Router } from 'express';
 import { ensureAdmin } from '../middlewares/auth.js';
 import {
@@ -14,12 +15,12 @@ const router = Router();
 
 router.use(ensureAdmin);
 
-router.get('/', getList);
-router.get('/novo', getCreate);
-router.post('/novo', postCreate);
-router.get('/editar/:id', getEdit);
-router.post('/editar/:id', postEdit);
-router.get('/excluir/:id', getDelete);
-router.post('/cancelar/:id', postCancel);
+router.get('/', asyncHandler(getList));
+router.get('/novo', asyncHandler(getCreate));
+router.post('/novo', asyncHandler(postCreate));
+router.get('/editar/:id', asyncHandler(getEdit));
+router.post('/editar/:id', asyncHandler(postEdit));
+router.post('/excluir/:id', asyncHandler(getDelete));
+router.post('/cancelar/:id', asyncHandler(postCancel));
 
 export default router;

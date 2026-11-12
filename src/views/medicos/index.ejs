@@ -38,7 +38,10 @@
             <td class="actions" data-label="Ações">
               <a href="/medicos/editar/<%= m.idMedico %>">Editar</a>
               &nbsp;|&nbsp;
-              <a href="/medicos/excluir/<%= m.idMedico %>" onclick="return confirm('Excluir médico?')">Excluir</a>
+              <form method="post" action="/medicos/excluir/<%= m.idMedico %>" class="inline-action" onsubmit="return confirm('Excluir médico?')">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                <button class="btn outline" type="submit">Excluir</button>
+              </form>
             </td>
           </tr>
         <% }) %>

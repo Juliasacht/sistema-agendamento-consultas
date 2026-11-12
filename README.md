@@ -73,7 +73,7 @@ Crie um arquivo `.env` na raiz do projeto usando o `.env.example` como base:
 
 ```env
 APP_PORT=3000
-SESSION_SECRET=troque-este-segredo-em-producao
+SESSION_SECRET=
 
 DB_HOST=localhost
 DB_PORT=3306
@@ -141,6 +141,17 @@ http://localhost:3000
 ```
 
 Para entrar na área administrativa, acesse `http://localhost:3000/admin/login` e use as credenciais cadastradas.
+
+## Proteções de segurança
+
+- Exclusões, cancelamento e logout são feitos por POST. Links GET não executam essas ações.
+- Todos os formulários POST, inclusive o login, exigem um token CSRF vinculado à sessão. Se a sessão expirar, recarregue o formulário.
+- O login permite até 10 tentativas por IP a cada 15 minutos, incluindo acessos bem-sucedidos. O bloqueio responde com HTTP 429 e `Retry-After`.
+- Cookies de sessão têm duração de duas horas, `HttpOnly`, `SameSite=Lax` e `Secure` em produção. As páginas dinâmicas não devem ser armazenadas em cache.
+- Falhas de banco retornam mensagens sem SQL ou detalhes internos; duplicidade e registros vinculados recebem mensagens específicas. Erros assíncronos e JSON inválido são tratados centralmente.
+- Em desenvolvimento, se `SESSION_SECRET` estiver vazio, um segredo temporário é gerado. Em produção, é obrigatório configurar um segredo próprio com pelo menos 32 caracteres. Para gerar um valor, execute `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"` e copie o resultado para o `.env`.
+
+As sessões e os contadores de tentativas usam memória do processo. Antes de hospedar várias instâncias, configure armazenamento compartilhado para ambos e ajuste o proxy confiável conforme a infraestrutura. As verificações de integração incluem rejeição de CSRF inválido, bloqueio de ações via GET e limite de login.
 
 ## Testes
 

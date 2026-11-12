@@ -548,3 +548,6 @@ body {
 .logout-icon:hover {
   background: rgba(255, 255, 255, 0.18);
 }
+
+.inline-action { display: inline; margin: 0; }
+.logout-button { background: transparent; border: 0; font-family: inherit; cursor: pointer; }

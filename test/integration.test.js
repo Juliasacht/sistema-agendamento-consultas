@@ -29,18 +29,40 @@ test('fluxo completo com MySQL real', { skip: process.env.RUN_INTEGRATION !== '1
   const base = 'http://127.0.0.1:' + port;
   let cookie = '';
   let logs = '';
+  let csrf = '';
   const request = async (url, data, authenticated = true) => {
+    let requestCookie = authenticated ? cookie : '';
+    let requestCsrf = authenticated ? csrf : '';
+    if (data && !requestCsrf) {
+      const page = await fetch(base + (authenticated && cookie ? '/consultas/novo' : '/admin/login'), {
+        redirect: 'manual', headers: requestCookie ? { Cookie: requestCookie } : {},
+      });
+      const newCookie = page.headers.get('set-cookie');
+      if (newCookie) requestCookie = newCookie.split(';')[0];
+      const html = await page.text();
+      requestCsrf = html.match(/name="_csrf" value="([^"]+)"/)?.[1] || '';
+      // Uma sessao anonima pode ter cookie sem ser autenticada.
+      if (!requestCsrf) {
+        const loginPage = await fetch(base + '/admin/login', { headers: requestCookie ? { Cookie: requestCookie } : {} });
+        requestCsrf = (await loginPage.text()).match(/name="_csrf" value="([^"]+)"/)?.[1] || '';
+      }
+    }
     const response = await fetch(base + url, {
-      method: data ? 'POST' : 'GET',
-      redirect: 'manual',
-      headers: {
-        ...(authenticated && cookie ? { Cookie: cookie } : {}),
-        ...(data ? { 'Content-Type': 'application/x-www-form-urlencoded' } : {}),
-      },
-      ...(data ? { body: new URLSearchParams(data) } : {}),
+      method: data ? 'POST' : 'GET', redirect: 'manual',
+      headers: { ...(requestCookie ? { Cookie: requestCookie } : {}),
+        ...(data ? { 'Content-Type': 'application/x-www-form-urlencoded' } : {}) },
+      ...(data ? { body: new URLSearchParams({ ...data, _csrf: requestCsrf }) } : {}),
     });
+    const text = await response.text();
+    const newCookie = response.headers.get('set-cookie');
+    if (authenticated) {
+      if (newCookie) { cookie = newCookie.split(';')[0]; csrf = ''; }
+      else if (requestCookie) cookie = requestCookie;
+      csrf = text.match(/name="_csrf" value="([^"]+)"/)?.[1] || csrf;
+      if (!csrf && !newCookie) csrf = requestCsrf;
+    }
     return { status: response.status, location: response.headers.get('location'),
-      cookie: response.headers.get('set-cookie'), text: await response.text() };
+      cookie: newCookie, text };
   };
   try {
     const schema = (await readFile(path.join(root, 'database/schema.sql'), 'utf8')).replaceAll('clinica_db', database);
@@ -221,7 +243,7 @@ test('fluxo completo com MySQL real', { skip: process.env.RUN_INTEGRATION !== '1
             assert.equal((await request('/consultas/editar/' + id)).status, 404);
             assert.equal((await request('/consultas/editar/' + id, form)).status, 404);
             assert.equal((await request('/consultas/cancelar/' + id, {})).status, 404);
-            assert.equal((await request('/consultas/excluir/' + id)).status, 404);
+            assert.equal((await request('/consultas/excluir/' + id, {})).status, 404);
           }
         });
       } finally {
@@ -231,13 +253,48 @@ test('fluxo completo com MySQL real', { skip: process.env.RUN_INTEGRATION !== '1
       }
     });
 
+
+    await t.test('protecoes de formularios e acoes destrutivas', async () => {
+      for (const url of ['/pacientes/excluir/' + patientId, '/medicos/excluir/' + doctorId, '/consultas/excluir/' + appointmentId, '/admin/logout']) {
+        assert.equal((await request(url)).status, 404, 'GET nao executa ' + url);
+      }
+      assert.equal((await request('/admin/dashboard')).status, 200, 'GET logout nao encerrou a sessao');
+      const [existing] = await conn.execute('SELECT COUNT(*) AS total FROM Consultas WHERE idConsulta=?', [appointmentId]);
+      assert.equal(existing[0].total, 1);
+      for (const url of ['/consultas/cancelar/' + appointmentId, '/pacientes/novo', '/admin/logout']) {
+        for (const token of [undefined, 'a'.repeat(64)]) {
+          const response = await fetch(base + url, {
+            method: 'POST', headers: { Cookie: cookie, 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams(token ? { _csrf: token } : {}),
+          });
+          assert.equal(response.status, 403);
+          await response.text();
+        }
+      }
+      const [unchanged] = await conn.execute('SELECT status FROM Consultas WHERE idConsulta=?', [appointmentId]);
+      assert.equal(unchanged[0].status, 'Realizada');
+      const linked = await request('/pacientes/excluir/' + patientId, {});
+      assert.equal(linked.status, 409);
+      assert.ok(linked.text.includes('consultas vinculadas'));
+      assert.equal(/FOREIGN KEY|DELETE FROM|clinica_integration_test|sqlMessage/i.test(linked.text), false);
+      const duplicate = await request('/medicos/novo', { nome: 'Duplicado', crm: token, especialidade: 'Teste' });
+      assert.equal(duplicate.status, 409);
+      assert.ok(duplicate.text.includes('CRM já cadastrado'));
+      assert.equal(/INSERT INTO|Duplicate entry|sqlMessage/i.test(duplicate.text), false);
+      assert.equal((await request('/pacientes/novo', { nome: '' })).status, 400);
+      assert.equal((await request('/medicos/novo', { nome: '' })).status, 400);
+      const badJson = await fetch(base + '/pacientes/novo', { method: 'POST', headers: { Cookie: cookie, 'Content-Type': 'application/json' }, body: '{invalid json' });
+      assert.equal(badJson.status, 400);
+      assert.equal((await badJson.text()).includes('SyntaxError'), false);
+    });
+
     await t.test('excluir consulta, paciente e medico', async () => {
       for (const [url, table, key, id] of [
         ['/consultas/excluir/', 'Consultas', 'idConsulta', appointmentId],
         ['/pacientes/excluir/', 'Pacientes', 'idPaciente', patientId],
         ['/medicos/excluir/', 'Medicos', 'idMedico', doctorId],
       ]) {
-        assert.equal((await request(url + id)).status, 302);
+        assert.equal((await request(url + id, {})).status, 302);
         const [rows] = await conn.execute('SELECT COUNT(*) AS total FROM ' + table + ' WHERE ' + key + ' = ?', [id]);
         assert.equal(rows[0].total, 0);
       }
@@ -248,10 +305,31 @@ test('fluxo completo com MySQL real', { skip: process.env.RUN_INTEGRATION !== '1
       }
     });
     await t.test('logout invalida acesso e paginas inexistentes retornam 404', async () => {
-      assert.equal((await request('/admin/logout')).status, 302);
+      assert.equal((await request('/admin/logout', {})).status, 302);
       assert.equal((await request('/admin/dashboard')).location, '/admin/login');
       assert.equal((await request('/pagina-inexistente')).status, 404);
     });
+
+    await t.test('limite de login responde 429 com prazo para nova tentativa', async () => {
+      let limited = false;
+      for (let attempt = 0; attempt < 12; attempt++) {
+        const response = await request('/admin/login', { login, senha: 'incorreta' });
+        if (response.status === 429) { limited = true; break; }
+        assert.equal(response.status, 400);
+      }
+      assert.equal(limited, true);
+      const page = await fetch(base + '/admin/login');
+      const anonymousCookie = page.headers.get('set-cookie').split(';')[0];
+      const anonymousToken = (await page.text()).match(/name="_csrf" value="([^"]+)"/)[1];
+      const response = await fetch(base + '/admin/login', { method: 'POST',
+        headers: { Cookie: anonymousCookie, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ login, senha: password, _csrf: anonymousToken }),
+      });
+      assert.equal(response.status, 429, 'Nova sessao nao contorna o limite do IP');
+      assert.ok(Number(response.headers.get('retry-after')) > 0);
+      await response.text();
+    });
+
   } finally {
     if (app && app.exitCode === null) {
       const exited = once(app, 'exit');
