@@ -109,6 +109,12 @@ test('fluxo completo com MySQL real', { skip: process.env.RUN_INTEGRATION !== '1
       for (const url of ['/pacientes', '/medicos', '/consultas', '/pacientes/novo', '/medicos/novo', '/consultas/novo']) {
         assert.equal((await request(url)).status, 200, url);
       }
+      assert.ok((await request('/pacientes')).text.includes('Cadastre o primeiro paciente'));
+      assert.ok((await request('/medicos')).text.includes('Cadastre o primeiro médico'));
+      assert.ok((await request('/consultas')).text.includes('agende a primeira consulta'));
+      const missing = await request('/consultas/novo');
+      assert.ok(missing.text.includes('Cadastrar paciente'));
+      assert.ok(missing.text.includes('Cadastrar médico'));
     });
     await t.test('paciente: cadastrar, buscar e editar', async () => {
       const form = { nome: 'Paciente ' + token, cpf: '', dataNascimento: '2000-02-29', telefone: '27999990000', email: token + '@example.com', endereco: 'Endereço fictício' };
@@ -116,11 +122,17 @@ test('fluxo completo com MySQL real', { skip: process.env.RUN_INTEGRATION !== '1
       const [rows] = await conn.execute('SELECT * FROM Pacientes WHERE email = ?', [form.email]);
       assert.equal(rows.length, 1);
       patientId = rows[0].idPaciente;
-      assert.equal((await request('/pacientes?q=' + token)).text.includes(form.nome), true);
+      await request('/css/styles.css');
+      const results = await request('/pacientes?q=%20' + token + '%20');
+      assert.ok(results.text.includes(form.nome));
+      assert.ok(results.text.includes('Paciente cadastrado com sucesso.'));
+      assert.ok(results.text.includes('data-confirm="Excluir permanentemente o paciente'));
+      assert.equal((await request('/pacientes')).text.includes('Paciente cadastrado com sucesso.'), false);
       assert.equal((await request('/pacientes/editar/' + patientId)).status, 200);
       assert.equal((await request('/pacientes/editar/' + patientId, { ...form, nome: 'Paciente editado ' + token })).status, 302);
       const [updated] = await conn.execute('SELECT nome FROM Pacientes WHERE idPaciente = ?', [patientId]);
       assert.equal(updated[0].nome, 'Paciente editado ' + token);
+      assert.ok((await request('/pacientes')).text.includes('Paciente atualizado com sucesso.'));
     });
     await t.test('medico: cadastrar, buscar e editar', async () => {
       const form = { nome: 'Médico ' + token, crm: token, especialidade: 'Clínica geral', telefone: '27999990001', email: 'medico_' + token + '@example.com', disponibilidade: 'Segunda a sexta' };
@@ -133,6 +145,7 @@ test('fluxo completo com MySQL real', { skip: process.env.RUN_INTEGRATION !== '1
       assert.equal((await request('/medicos/editar/' + doctorId, { ...form, especialidade: 'Cardiologia' })).status, 302);
       const [updated] = await conn.execute('SELECT especialidade FROM Medicos WHERE idMedico = ?', [doctorId]);
       assert.equal(updated[0].especialidade, 'Cardiologia');
+      assert.ok((await request('/medicos')).text.includes('Médico atualizado com sucesso.'));
     });
     await t.test('consulta: validar, agendar, buscar e atualizar status', async () => {
       const form = { data: '2030-03-15', horario: '10:00', status: 'Agendada', idPaciente: String(patientId), idMedico: String(doctorId), observacoes: token };
@@ -151,6 +164,18 @@ test('fluxo completo com MySQL real', { skip: process.env.RUN_INTEGRATION !== '1
       const [updated] = await conn.execute('SELECT status,horario FROM Consultas WHERE idConsulta = ?', [appointmentId]);
       assert.equal(updated[0].status, 'Realizada');
       assert.equal(updated[0].horario, '11:00:00');
+      assert.ok((await request('/consultas')).text.includes('Consulta atualizada com sucesso.'));
+      const filtered = await request('/consultas?q=' + token + '&data=2030-03-15&status=Realizada');
+      assert.ok(filtered.text.includes(token));
+      assert.ok(filtered.text.includes('1 registro encontrado'));
+      assert.ok((await request('/consultas?q=' + token + '&data=2030-03-15&status=Confirmada')).text.includes('Nenhum resultado encontrado'));
+      assert.ok((await request('/consultas?q=11%3A00')).text.includes(token));
+      for (const url of ['/pacientes?q=%25', '/medicos?q=%25', '/consultas?q=%25']) {
+        const empty = await request(url);
+        assert.ok(empty.text.includes('Nenhum resultado encontrado'), url);
+        assert.ok(empty.text.includes('Limpar filtros'), url);
+      }
+      assert.equal((await request('/consultas?data=2030-02-30&status=invalido')).status, 200);
     });
 
     await t.test('regras da agenda com concorrencia e cancelamento', async t => {
@@ -195,6 +220,7 @@ test('fluxo completo com MySQL real', { skip: process.env.RUN_INTEGRATION !== '1
           assert.equal((await request('/consultas/cancelar/' + first.id, {})).status, 302);
           const [rows] = await conn.execute('SELECT status FROM Consultas WHERE idConsulta = ?', [first.id]);
           assert.equal(rows[0].status, 'Cancelada');
+          assert.ok((await request('/consultas')).text.includes('Consulta cancelada. O horário foi liberado.'));
           const replacement = await create({});
           assert.equal(replacement.status, 302);
           assert.equal((await request('/consultas/editar/' + first.id, first.form)).status, 409);
@@ -297,6 +323,7 @@ test('fluxo completo com MySQL real', { skip: process.env.RUN_INTEGRATION !== '1
         assert.equal((await request(url + id, {})).status, 302);
         const [rows] = await conn.execute('SELECT COUNT(*) AS total FROM ' + table + ' WHERE ' + key + ' = ?', [id]);
         assert.equal(rows[0].total, 0);
+        assert.ok((await request(url.split('/excluir/')[0])).text.includes('excluíd'));
       }
     });
     await t.test('edicao de registros excluidos retorna 404', async () => {

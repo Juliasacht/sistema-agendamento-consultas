@@ -1,3 +1,4 @@
+import { containsLike } from '../utils/search.js';
 import pool from './db.js';
 
 export async function createPaciente(data) {
@@ -21,9 +22,9 @@ export async function listPacientes({ search } = {}) {
   let sql = 'SELECT * FROM Pacientes';
   const params = [];
   if (search) {
-    sql += ' WHERE nome LIKE ? OR cpf LIKE ? OR email LIKE ?';
-    const like = `%${search}%`;
-    params.push(like, like, like);
+    sql += " WHERE nome LIKE ? ESCAPE '!' OR cpf LIKE ? ESCAPE '!' OR email LIKE ? ESCAPE '!' OR telefone LIKE ? ESCAPE '!'";
+    const like = containsLike(search);
+    params.push(like, like, like, like);
   }
   sql += ' ORDER BY nome';
   const [rows] = await pool.execute(sql, params);

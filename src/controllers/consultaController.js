@@ -1,3 +1,6 @@
+import { success } from '../middlewares/feedback.js';
+import { normalizeSearch } from '../utils/search.js';
+import { validDate, CONSULTA_STATUS } from '../validators/consultaValidator.js';
 import { CONSULTA_DURATION_MINUTES } from '../config/agenda.js';
 import { AgendaError, validConsultaId } from '../utils/agendaError.js';
 import { prepareConsulta } from '../validators/consultaValidator.js';
@@ -41,8 +44,10 @@ async function renderConsultaForm(res, { status = 200, title, form, errors, edit
 
 export async function getList(req, res) {
   try {
-    const q = typeof req.query.q === 'string' ? req.query.q : '';
-    const consultasRaw = await listConsultas({ search: q });
+    const q = normalizeSearch(req.query.q);
+    const data = typeof req.query.data === 'string' && validDate(req.query.data) ? req.query.data : '';
+    const statusFilter = CONSULTA_STATUS.includes(req.query.status) ? req.query.status : '';
+    const consultasRaw = await listConsultas({ search: q, data, status: statusFilter });
 
     const consultas = consultasRaw.map((consulta) => {
       const status = consulta.status || '';
@@ -65,6 +70,9 @@ export async function getList(req, res) {
       active: 'consultas',
       consultas,
       q,
+      data,
+      statusFilter,
+      statusOptions: CONSULTA_STATUS,
     });
   } catch (err) {
     return res.status(500).send('Não foi possível concluir a operação. Tente novamente.');
@@ -99,6 +107,7 @@ export async function postCreate(req, res) {
     }
 
     await createConsulta(form);
+    success(req, 'Consulta cadastrada com sucesso.');
     return res.redirect('/consultas');
   } catch (err) {
     return await renderConsultaForm(res, {
@@ -148,6 +157,7 @@ export async function postEdit(req, res) {
     }
 
     await updateConsulta(id, form);
+    success(req, 'Consulta atualizada com sucesso.');
     return res.redirect('/consultas');
   } catch (err) {
     return await renderConsultaForm(res, {
@@ -163,18 +173,19 @@ export async function postEdit(req, res) {
 export async function getDelete(req, res) {
   try {
     await deleteConsulta(req.params.id);
+    success(req, 'Consulta excluída com sucesso.');
     return res.redirect('/consultas');
   } catch (err) {
-    return res.status(err instanceof AgendaError ? err.status : 500).send(err instanceof AgendaError ? err.message : 'Não foi possível excluir a consulta.');
+    return res.status(err instanceof AgendaError ? err.status : 500).render('operation-error', { title: 'Não foi possível excluir', message: err instanceof AgendaError ? err.message : 'Não foi possível excluir a consulta.', returnTo: '/consultas' });
   }
 }
 
 export async function postCancel(req, res) {
   try {
     await cancelConsulta(req.params.id);
+    success(req, 'Consulta cancelada. O horário foi liberado.');
     return res.redirect('/consultas');
   } catch (err) {
-    return res.status(err instanceof AgendaError ? err.status : 500).send(
-      err instanceof AgendaError ? err.message : 'Não foi possível cancelar a consulta.');
+    return res.status(err instanceof AgendaError ? err.status : 500).render('operation-error', { title: 'Não foi possível cancelar', message: err instanceof AgendaError ? err.message : 'Não foi possível cancelar a consulta.', returnTo: '/consultas' });
   }
 }

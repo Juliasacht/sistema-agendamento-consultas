@@ -1,47 +1,50 @@
 <div class="card">
   <div class="card-header">
     <h2>Pacientes</h2>
-    <a href="/pacientes/novo" class="btn">Novo Paciente</a>
+    <a href="/pacientes/novo" class="btn">Novo paciente</a>
   </div>
-
-  <form method="get" action="/pacientes" class="search-form">
-    <input type="text" name="q" value="<%= q %>" placeholder="Buscar por nome, CPF ou email" />
+  <form method="get" action="/pacientes" class="search-form search-toolbar" role="search" aria-label="Buscar pacientes">
+    <div class="search-field search-field-grow">
+      <label for="search-q">Buscar</label>
+      <input type="search" id="search-q" name="q" maxlength="120" value="<%= q %>" placeholder="Nome, CPF, e-mail ou telefone" />
+    </div>
     <button class="btn outline" type="submit">Buscar</button>
+    <% if (q) { %><a href="/pacientes" class="clear-search">Limpar filtros</a><% } %>
   </form>
+  <p class="results-count" role="status"><%= pacientes.length %> <%= pacientes.length === 1 ? 'registro' : 'registros' %> <%= (q) ? (pacientes.length === 1 ? 'encontrado com os filtros atuais' : 'encontrados com os filtros atuais') : (pacientes.length === 1 ? 'cadastrado' : 'cadastrados') %>.</p>
 
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Nome</th>
-        <th>CPF</th>
-        <th>Telefone</th>
-        <th>Email</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      <% if (!pacientes || pacientes.length === 0) { %>
-        <tr>
-          <td colspan="5">Nenhum paciente cadastrado.</td>
-        </tr>
+  <% if (!pacientes.length) { %>
+    <div class="empty-state">
+      <% if (q) { %>
+        <h3>Nenhum resultado encontrado</h3>
+        <p>Revise os termos da busca ou limpe os filtros para ver todos os registros.</p>
+        <a href="/pacientes" class="btn outline">Limpar filtros</a>
       <% } else { %>
+        <h3>Nenhum paciente cadastrado.</h3>
+        <p>Cadastre o primeiro paciente para começar a organizar os atendimentos.</p>
+        <a href="/pacientes/novo" class="btn">Novo paciente</a>
+      <% } %>
+    </div>
+  <% } else { %>
+    <table class="table">
+      <thead><tr><th scope="col">Nome</th><th scope="col">CPF</th><th scope="col">Telefone</th><th scope="col">E-mail</th><th scope="col">Ações</th></tr></thead>
+      <tbody>
         <% pacientes.forEach(p => { %>
           <tr>
             <td data-label="Nome"><%= p.nome %></td>
-            <td data-label="CPF"><%= p.cpf || '-' %></td>
-            <td data-label="Telefone"><%= p.telefone || '-' %></td>
-            <td data-label="Email"><%= p.email || '-' %></td>
+            <td data-label="CPF"><%= p.cpf || '—' %></td>
+            <td data-label="Telefone"><%= p.telefone || '—' %></td>
+            <td data-label="E-mail"><%= p.email || '—' %></td>
             <td class="actions" data-label="Ações">
               <a href="/pacientes/editar/<%= p.idPaciente %>">Editar</a>
-              &nbsp;|&nbsp;
-              <form method="post" action="/pacientes/excluir/<%= p.idPaciente %>" class="inline-action" onsubmit="return confirm('Excluir paciente?')">
+              <form method="post" action="/pacientes/excluir/<%= p.idPaciente %>" class="inline-action" data-confirm="Excluir permanentemente o paciente <%= p.nome %>? Esta ação não pode ser desfeita.">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-                <button class="btn outline" type="submit">Excluir</button>
+                <button class="btn danger" type="submit">Excluir</button>
               </form>
             </td>
           </tr>
         <% }) %>
-      <% } %>
-    </tbody>
-  </table>
+      </tbody>
+    </table>
+  <% } %>
 </div>

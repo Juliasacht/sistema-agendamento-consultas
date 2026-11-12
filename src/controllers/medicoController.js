@@ -1,3 +1,5 @@
+import { success } from '../middlewares/feedback.js';
+import { normalizeSearch } from '../utils/search.js';
 import { databaseError } from '../utils/databaseError.js';
 import {
   createMedico,
@@ -19,12 +21,13 @@ function validateMedico(form) {
 
 export async function getList(req, res) {
   try {
-    const medicos = await listMedicos({ search: req.query.q });
+    const q = normalizeSearch(req.query.q);
+    const medicos = await listMedicos({ search: q });
     return res.render('medicos/index', {
       title: 'Médicos',
       active: 'medicos',
       medicos,
-      q: req.query.q || '',
+      q,
     });
   } catch (err) {
     const failure = databaseError(err);
@@ -58,6 +61,7 @@ export async function postCreate(req, res) {
 
   try {
     await createMedico(form);
+    success(req, 'Médico cadastrado com sucesso.');
     return res.redirect('/medicos');
   } catch (err) {
     const failure = databaseError(err, 'CRM');
@@ -106,7 +110,9 @@ export async function postEdit(req, res) {
   }
 
   try {
-    await updateMedico(id, form);
+    const updated = await updateMedico(id, form);
+    if (!updated) return res.status(404).render('operation-error', { title: 'Registro não encontrado', message: 'Médico não encontrado.', returnTo: '/medicos' });
+    success(req, 'Médico atualizado com sucesso.');
     return res.redirect('/medicos');
   } catch (err) {
     const failure = databaseError(err, 'CRM');
@@ -123,10 +129,12 @@ export async function postEdit(req, res) {
 
 export async function getDelete(req, res) {
   try {
-    await deleteMedico(req.params.id);
+    const deleted = await deleteMedico(req.params.id);
+    if (!deleted) return res.status(404).render('operation-error', { title: 'Registro não encontrado', message: 'Médico não encontrado.', returnTo: '/medicos' });
+    success(req, 'Médico excluído com sucesso.');
     return res.redirect('/medicos');
   } catch (err) {
     const failure = databaseError(err);
-    return res.status(failure.status).send(failure.message);
+    return res.status(failure.status).render('operation-error', { title: 'Não foi possível excluir', message: failure.message, returnTo: '/medicos' });
   }
 }

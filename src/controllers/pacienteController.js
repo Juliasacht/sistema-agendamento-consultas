@@ -1,3 +1,5 @@
+import { success } from '../middlewares/feedback.js';
+import { normalizeSearch } from '../utils/search.js';
 import { databaseError } from '../utils/databaseError.js';
 import {
   createPaciente,
@@ -23,12 +25,13 @@ function formatDateInput(value) {
 
 export async function getList(req, res) {
   try {
-    const pacientes = await listPacientes({ search: req.query.q });
+    const q = normalizeSearch(req.query.q);
+    const pacientes = await listPacientes({ search: q });
     return res.render('pacientes/index', {
       title: 'Pacientes',
       active: 'pacientes',
       pacientes,
-      q: req.query.q || '',
+      q,
     });
   } catch (err) {
     const failure = databaseError(err);
@@ -62,6 +65,7 @@ export async function postCreate(req, res) {
 
   try {
     await createPaciente(form);
+    success(req, 'Paciente cadastrado com sucesso.');
     return res.redirect('/pacientes');
   } catch (err) {
     const failure = databaseError(err, 'CPF');
@@ -113,7 +117,9 @@ export async function postEdit(req, res) {
   }
 
   try {
-    await updatePaciente(id, form);
+    const updated = await updatePaciente(id, form);
+    if (!updated) return res.status(404).render('operation-error', { title: 'Registro não encontrado', message: 'Paciente não encontrado.', returnTo: '/pacientes' });
+    success(req, 'Paciente atualizado com sucesso.');
     return res.redirect('/pacientes');
   } catch (err) {
     const failure = databaseError(err, 'CPF');
@@ -130,10 +136,12 @@ export async function postEdit(req, res) {
 
 export async function getDelete(req, res) {
   try {
-    await deletePaciente(req.params.id);
+    const deleted = await deletePaciente(req.params.id);
+    if (!deleted) return res.status(404).render('operation-error', { title: 'Registro não encontrado', message: 'Paciente não encontrado.', returnTo: '/pacientes' });
+    success(req, 'Paciente excluído com sucesso.');
     return res.redirect('/pacientes');
   } catch (err) {
     const failure = databaseError(err);
-    return res.status(failure.status).send(failure.message);
+    return res.status(failure.status).render('operation-error', { title: 'Não foi possível excluir', message: failure.message, returnTo: '/pacientes' });
   }
 }

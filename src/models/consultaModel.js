@@ -1,3 +1,4 @@
+import { containsLike } from '../utils/search.js';
 import pool from './db.js';
 import { CONSULTA_DURATION_MINUTES, ACTIVE_STATUS, FINAL_STATUS } from '../config/agenda.js';
 import { AgendaError, validConsultaId } from '../utils/agendaError.js';
@@ -89,35 +90,27 @@ export async function cancelConsulta(id) {
     await conn.execute("UPDATE Consultas SET status = 'Cancelada' WHERE idConsulta = ?", [id]);
   });
 }
-export async function listConsultas({ search } = {}) {
+export async function listConsultas({ search, data, status } = {}) {
   let sql = `
-    SELECT c.*, 
-           p.nome AS pacienteNome,
-           m.nome AS medicoNome
-      FROM Consultas c
-      JOIN Pacientes p ON p.idPaciente = c.idPaciente
-      JOIN Medicos   m ON m.idMedico   = c.idMedico
+    SELECT c.*, p.nome AS pacienteNome, m.nome AS medicoNome
+    FROM Consultas c
+    JOIN Pacientes p ON p.idPaciente = c.idPaciente
+    JOIN Medicos m ON m.idMedico = c.idMedico
   `;
+  const conditions = [];
   const params = [];
-
   if (search) {
-    sql += `
-      WHERE p.nome LIKE ?
-         OR m.nome LIKE ?
-         OR c.status LIKE ?
-         OR DATE_FORMAT(c.data, '%d/%m/%Y') LIKE ?
-    `;
-    const like = `%${search}%`;
-    params.push(like, like, like, like);
+    const fields = ['p.nome', 'm.nome', 'c.status', "DATE_FORMAT(c.data, '%d/%m/%Y')", "DATE_FORMAT(c.data, '%Y-%m-%d')", "TIME_FORMAT(c.horario, '%H:%i')"];
+    conditions.push('(' + fields.map(field => field + " LIKE ? ESCAPE '!'").join(' OR ') + ')');
+    params.push(...fields.map(() => containsLike(search)));
   }
-
+  if (data) { conditions.push('c.data = ?'); params.push(data); }
+  if (status) { conditions.push('c.status = ?'); params.push(status); }
+  if (conditions.length) sql += ' WHERE ' + conditions.join(' AND ');
   sql += ' ORDER BY c.data DESC, c.horario DESC';
-
   const [rows] = await pool.execute(sql, params);
   return rows;
 }
-
-
 
 export async function getConsultaById(id) {
   if (!validConsultaId(String(id))) return null;

@@ -551,3 +551,28 @@ body {
 
 .inline-action { display: inline; margin: 0; }
 .logout-button { background: transparent; border: 0; font-family: inherit; cursor: pointer; }
+
+/* Feedback e orientacao nas listagens */
+.notice { margin-bottom: 18px; padding: 14px 18px; border: 1px solid #a7d7b6; border-radius: 8px; }
+.notice-success { background: #edf9f0; color: #155b31; }
+.empty-state { padding: 30px 20px; text-align: center; }
+.empty-state h3 { margin: 0 0 8px; }
+.empty-state p, .results-count { color: var(--color-muted); }
+.results-count { font-size: 13px; margin: 14px 0; }
+.search-toolbar { align-items: end; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.search-field { display: flex; flex-direction: column; gap: 5px; min-width: 150px; }
+.search-field-grow { flex: 1 1 260px; }
+.search-field label { font-size: 13px; font-weight: 500; }
+.search-toolbar input, .search-toolbar select { width: 100%; min-height: 38px; border: 1px solid var(--color-border); border-radius: 6px; padding: 8px 10px; font: inherit; background: white; }
+.search-toolbar .btn { min-height: 38px; }
+.clear-search { padding: 9px 0; color: var(--color-primary-dark); font-size: 14px; }
+.btn.danger { background: #fff1f2; color: #a51d32; border: 1px solid #fecdd3; }
+.btn.danger:hover { background: #ffe4e8; }
+.actions .inline-action { margin-left: 8px; }
+@media (max-width: 640px) {
+  .search-field, .search-field-grow { flex: 1 1 100%; min-width: 0; }
+  .search-toolbar .btn { flex: 1; }
+  .actions .inline-action { display: inline-block; margin: 6px 6px 0 0; }
+}
+
+.btn:disabled { opacity: .55; cursor: not-allowed; transform: none; box-shadow: none; }

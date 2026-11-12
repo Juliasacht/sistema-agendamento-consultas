@@ -1,6 +1,6 @@
 export const CONSULTA_STATUS = ['Agendada', 'Confirmada', 'Realizada', 'Cancelada', 'Não Compareceu'];
 
-function validDate(value) {
+export function validDate(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const [year, month, day] = value.split('-').map(Number);
   if (year < 1000 || month < 1 || month > 12 || day < 1) return false;

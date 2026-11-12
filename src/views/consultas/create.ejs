@@ -8,6 +8,13 @@
   <p class="subtitle">Cada consulta reserva <%= durationMinutes %> minutos. Consultas agendadas e confirmadas não podem se sobrepor para o mesmo médico ou paciente.</p>
   <p class="subtitle">O status Cancelada libera o horário e mantém o registro. Para reativar, escolha Agendada ou Confirmada. Consultas finalizadas permitem editar apenas observações.</p>
 
+  <% if (!pacientes.length || !medicos.length) { %>
+    <div class="notice" role="status">
+      <p>Para agendar, cadastre primeiro os registros que faltam:</p>
+      <% if (!pacientes.length) { %><a href="/pacientes/novo" class="btn outline">Cadastrar paciente</a><% } %>
+      <% if (!medicos.length) { %><a href="/medicos/novo" class="btn outline">Cadastrar médico</a><% } %>
+    </div>
+  <% } %>
   <form method="post" class="form">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
     <div class="form-group">
@@ -68,7 +75,7 @@
       <% if (errors.observacoes) { %><span class="error"><%= errors.observacoes %></span><% } %>
     </div>
 
-    <button class="btn" type="submit"><%= editing ? 'Salvar alterações' : 'Agendar' %></button>
+    <button class="btn" type="submit" <%= !pacientes.length || !medicos.length ? 'disabled' : '' %>><%= editing ? 'Salvar alterações' : 'Agendar' %></button>
     <a href="/consultas" class="btn outline">Voltar à agenda</a>
   </form>
 </div>

@@ -1,51 +1,50 @@
 <div class="card">
   <div class="card-header">
     <h2>Médicos</h2>
-    <a href="/medicos/novo" class="btn">Novo Médico</a>
+    <a href="/medicos/novo" class="btn">Novo médico</a>
   </div>
-
-  <form method="get" action="/medicos" class="search-form">
-    <input type="text" name="q" value="<%= q %>" placeholder="Buscar por nome, CRM ou especialidade" />
+  <form method="get" action="/medicos" class="search-form search-toolbar" role="search" aria-label="Buscar medicos">
+    <div class="search-field search-field-grow">
+      <label for="search-q">Buscar</label>
+      <input type="search" id="search-q" name="q" maxlength="120" value="<%= q %>" placeholder="Nome, CRM, especialidade, e-mail ou telefone" />
+    </div>
     <button class="btn outline" type="submit">Buscar</button>
+    <% if (q) { %><a href="/medicos" class="clear-search">Limpar filtros</a><% } %>
   </form>
+  <p class="results-count" role="status"><%= medicos.length %> <%= medicos.length === 1 ? 'registro' : 'registros' %> <%= (q) ? (medicos.length === 1 ? 'encontrado com os filtros atuais' : 'encontrados com os filtros atuais') : (medicos.length === 1 ? 'cadastrado' : 'cadastrados') %>.</p>
 
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Nome</th>
-        <th>CRM</th>
-        <th>Especialidade</th>
-        <th>Telefone</th>
-        <th>Email</th>
-        <th>Disponibilidade</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      <% if (!medicos || medicos.length === 0) { %>
-        <tr>
-          <td colspan="7">Nenhum médico cadastrado.</td>
-        </tr>
+  <% if (!medicos.length) { %>
+    <div class="empty-state">
+      <% if (q) { %>
+        <h3>Nenhum resultado encontrado</h3>
+        <p>Revise os termos da busca ou limpe os filtros para ver todos os registros.</p>
+        <a href="/medicos" class="btn outline">Limpar filtros</a>
       <% } else { %>
+        <h3>Nenhum médico cadastrado.</h3>
+        <p>Cadastre o primeiro médico e sua especialidade para começar a agendar.</p>
+        <a href="/medicos/novo" class="btn">Novo médico</a>
+      <% } %>
+    </div>
+  <% } else { %>
+    <table class="table">
+      <thead><tr><th scope="col">Nome</th><th scope="col">CRM</th><th scope="col">Especialidade</th><th scope="col">Telefone</th><th scope="col">Ações</th></tr></thead>
+      <tbody>
         <% medicos.forEach(m => { %>
           <tr>
             <td data-label="Nome"><%= m.nome %></td>
             <td data-label="CRM"><%= m.crm %></td>
-            <td data-label="Especialidade"><%= m.especialidade || '-' %></td>
-            <td data-label="Telefone"><%= m.telefone || '-' %></td>
-            <td data-label="Email"><%= m.email || '-' %></td>
-            <td data-label="Disponibilidade"><%= m.disponibilidade || '-' %></td>
+            <td data-label="Especialidade"><%= m.especialidade %></td>
+            <td data-label="Telefone"><%= m.telefone || '—' %></td>
             <td class="actions" data-label="Ações">
               <a href="/medicos/editar/<%= m.idMedico %>">Editar</a>
-              &nbsp;|&nbsp;
-              <form method="post" action="/medicos/excluir/<%= m.idMedico %>" class="inline-action" onsubmit="return confirm('Excluir médico?')">
+              <form method="post" action="/medicos/excluir/<%= m.idMedico %>" class="inline-action" data-confirm="Excluir permanentemente o médico <%= m.nome %>? Esta ação não pode ser desfeita.">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-                <button class="btn outline" type="submit">Excluir</button>
+                <button class="btn danger" type="submit">Excluir</button>
               </form>
             </td>
           </tr>
         <% }) %>
-      <% } %>
-    </tbody>
-  </table>
+      </tbody>
+    </table>
+  <% } %>
 </div>

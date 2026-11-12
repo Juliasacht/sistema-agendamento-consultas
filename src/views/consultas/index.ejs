@@ -1,61 +1,70 @@
 <div class="card">
   <div class="card-header">
     <h2>Consultas</h2>
-    <a href="/consultas/novo" class="btn">Nova Consulta</a>
+    <a href="/consultas/novo" class="btn">Nova consulta</a>
   </div>
-
-  <form method="get" action="/consultas" class="search-form">
-    <input
-      type="text"
-      name="q"
-      value="<%= q %>"
-      placeholder="Buscar por paciente, médico, data ou status" />
+  <form method="get" action="/consultas" class="search-form search-toolbar" role="search" aria-label="Buscar consultas">
+    <div class="search-field search-field-grow">
+      <label for="search-q">Buscar</label>
+      <input type="search" id="search-q" name="q" maxlength="120" value="<%= q %>" placeholder="Paciente, médico, data, horário ou status" />
+    </div>
+    <div class="search-field">
+      <label for="filter-data">Data</label>
+      <input type="date" id="filter-data" name="data" value="<%= data %>" />
+    </div>
+    <div class="search-field">
+      <label for="filter-status">Status</label>
+      <select id="filter-status" name="status">
+        <option value="">Todos os status</option>
+        <% statusOptions.forEach(option => { %>
+          <option value="<%= option %>" <%= statusFilter === option ? 'selected' : '' %>><%= option %></option>
+        <% }) %>
+      </select>
+    </div>
     <button class="btn outline" type="submit">Buscar</button>
+    <% if (q || data || statusFilter) { %><a href="/consultas" class="clear-search">Limpar filtros</a><% } %>
   </form>
+  <p class="results-count" role="status"><%= consultas.length %> <%= consultas.length === 1 ? 'registro' : 'registros' %> <%= (q || data || statusFilter) ? (consultas.length === 1 ? 'encontrado com os filtros atuais' : 'encontrados com os filtros atuais') : (consultas.length === 1 ? 'cadastrado' : 'cadastrados') %>.</p>
 
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Data</th>
-        <th>Horário</th>
-        <th>Paciente</th>
-        <th>Médico</th>
-        <th>Status</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      <% if (!consultas || consultas.length === 0) { %>
-        <tr>
-          <td colspan="6">Nenhuma consulta cadastrada.</td>
-        </tr>
+  <% if (!consultas.length) { %>
+    <div class="empty-state">
+      <% if (q || data || statusFilter) { %>
+        <h3>Nenhum resultado encontrado</h3>
+        <p>Revise os termos da busca, a data ou o status ou limpe os filtros para ver todos os registros.</p>
+        <a href="/consultas" class="btn outline">Limpar filtros</a>
       <% } else { %>
+        <h3>Nenhuma consulta cadastrada.</h3>
+        <p>Cadastre pacientes e médicos e agende a primeira consulta.</p>
+        <a href="/consultas/novo" class="btn">Nova consulta</a>
+      <% } %>
+    </div>
+  <% } else { %>
+    <table class="table">
+      <thead><tr><th scope="col">Data</th><th scope="col">Horário</th><th scope="col">Paciente</th><th scope="col">Médico</th><th scope="col">Status</th><th scope="col">Ações</th></tr></thead>
+      <tbody>
         <% consultas.forEach(c => { %>
           <tr>
             <td data-label="Data"><%= c.dataFormatada %></td>
-            <td data-label="Horário"><%= c.horario %></td>
+            <td data-label="Horário"><%= c.horario.slice(0,5) %></td>
             <td data-label="Paciente"><%= c.pacienteNome %></td>
             <td data-label="Médico"><%= c.medicoNome %></td>
-            <td data-label="Status">
-              <span class="badge <%= c.statusSlug %>"><%= c.status %></span>
-            </td>
+            <td data-label="Status"><span class="badge <%= c.statusSlug %>"><%= c.status %></span></td>
             <td class="actions" data-label="Ações">
               <a href="/consultas/editar/<%= c.idConsulta %>">Editar</a>
               <% if (['agendada', 'confirmada'].includes(c.status.toLowerCase())) { %>
-                <form method="post" action="/consultas/cancelar/<%= c.idConsulta %>" style="display:inline" onsubmit="return confirm('Cancelar esta consulta e liberar o horário?')">
+                <form method="post" action="/consultas/cancelar/<%= c.idConsulta %>" class="inline-action" data-confirm="Cancelar a consulta de <%= c.pacienteNome %> em <%= c.dataFormatada %>, às <%= c.horario.slice(0,5) %>? O horário será liberado e o registro será mantido.">
                   <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
                   <button class="btn outline" type="submit">Cancelar consulta</button>
                 </form>
               <% } %>
-              &nbsp;|&nbsp;
-              <form method="post" action="/consultas/excluir/<%= c.idConsulta %>" class="inline-action" onsubmit="return confirm('Excluir consulta?')">
+              <form method="post" action="/consultas/excluir/<%= c.idConsulta %>" class="inline-action" data-confirm="Excluir permanentemente a consulta de <%= c.pacienteNome %> em <%= c.dataFormatada %>, às <%= c.horario.slice(0,5) %>? Esta ação não pode ser desfeita. Para liberar o horário mantendo o histórico, use Cancelar consulta.">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-                <button class="btn outline" type="submit">Excluir</button>
+                <button class="btn danger" type="submit">Excluir</button>
               </form>
             </td>
           </tr>
         <% }) %>
-      <% } %>
-    </tbody>
-  </table>
+      </tbody>
+    </table>
+  <% } %>
 </div>

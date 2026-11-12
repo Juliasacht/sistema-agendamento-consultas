@@ -1,3 +1,4 @@
+import { feedback } from './middlewares/feedback.js';
 import { randomBytes } from 'node:crypto';
 import { csrfProtection, errorHandler } from './middlewares/security.js';
 import express from 'express';
@@ -47,6 +48,7 @@ app.use(express.json({ limit: '64kb' }));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.use(csrfProtection);
+app.use(feedback);
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));

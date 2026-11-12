@@ -142,6 +142,15 @@ http://localhost:3000
 
 Para entrar na área administrativa, acesse `http://localhost:3000/admin/login` e use as credenciais cadastradas.
 
+## Experiência de uso
+
+- Mensagens de sucesso após cadastrar, editar, excluir ou cancelar. Elas aparecem na próxima página renderizada e não se repetem ao atualizar.
+- Confirmações de exclusão identificam o registro e informam que a remoção é permanente. O cancelamento de consulta explica que o histórico será mantido.
+- Buscas por nome e dados de contato, com limite de 120 caracteres, contador de resultados e opção de limpar os filtros. Os caracteres `%` e `_` são pesquisados literalmente.
+- Na agenda, os filtros de texto, data e status podem ser combinados.
+- Listas vazias orientam o primeiro cadastro; buscas sem resultado sugerem revisar ou limpar os filtros.
+- Falhas de exclusão ou cancelamento apresentam um caminho para voltar à lista.
+
 ## Proteções de segurança
 
 - Exclusões, cancelamento e logout são feitos por POST. Links GET não executam essas ações.
