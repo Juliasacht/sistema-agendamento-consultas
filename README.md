@@ -142,6 +142,12 @@ http://localhost:3000
 
 Para entrar na área administrativa, acesse `http://localhost:3000/admin/login` e use as credenciais cadastradas.
 
+## Interface
+
+A interface usa uma identidade visual com azul profundo, verde e fundos claros, fontes do sistema e componentes padronizados. No computador, a navegação fica na lateral; em telas menores, o menu pode ser aberto pelo botão Menu, fechado pelo fundo ou pela tecla Escape.
+
+O painel mostra os totais reais de pacientes, médicos e consultas do dia, além dos seis primeiros registros da agenda de hoje. Os formulários usam duas colunas no computador e uma no celular; as tabelas se transformam em cartões em telas pequenas. Há indicação de foco, atalho para pular ao conteúdo e rótulos associados aos campos.
+
 ## Experiência de uso
 
 - Mensagens de sucesso após cadastrar, editar, excluir ou cancelar. Elas aparecem na próxima página renderizada e não se repetem ao atualizar.

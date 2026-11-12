@@ -4,3 +4,20 @@ document.addEventListener('submit', event => {
     event.preventDefault();
   }
 });
+
+const menuButton = document.querySelector('.nav-toggle');
+const closeMenu = () => {
+  document.body.classList.remove('nav-open');
+  menuButton?.setAttribute('aria-expanded', 'false');
+  menuButton?.setAttribute('aria-label', 'Abrir menu de navegação');
+};
+menuButton?.addEventListener('click', () => {
+  const open = document.body.classList.toggle('nav-open');
+  menuButton.setAttribute('aria-expanded', String(open));
+  menuButton.setAttribute('aria-label', open ? 'Fechar menu de navegação' : 'Abrir menu de navegação');
+});
+document.querySelector('[data-close-menu]')?.addEventListener('click', closeMenu);
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && document.body.classList.contains('nav-open')) { closeMenu(); menuButton?.focus(); }
+});
+document.querySelectorAll('.nav-links a').forEach(link => link.addEventListener('click', closeMenu));

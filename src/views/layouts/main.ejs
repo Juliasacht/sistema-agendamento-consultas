@@ -1,72 +1,61 @@
+<% const section = typeof active !== 'undefined' ? active : ''; %>
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#122b40" />
   <title><%= title || 'Clínica Médica' %></title>
-
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
-<body>
-  <header class="topbar">
-    <div class="container topbar-inner">
-      <div class="brand">
-        <span class="brand-logo">+</span>
-        <div class="brand-text">
-          <span class="brand-title">Clínica Médica</span>
-          <span class="brand-subtitle">Sistema de Consultas</span>
-        </div>
-      </div>
-
-      <button class="nav-toggle" aria-label="Abrir menu" onclick="document.body.classList.toggle('nav-open')">
-        Menu
-      </button>
-
-      <nav class="nav-links">
-        <a href="/" class="<%= (typeof active !== 'undefined' && active === 'home') ? 'active' : '' %>">
-          Início
-        </a>
-
-        <% if (admin) { %>
-          <a href="/pacientes" class="<%= (typeof active !== 'undefined' && active === 'pacientes') ? 'active' : '' %>">
-            Pacientes
-          </a>
-          <a href="/medicos" class="<%= (typeof active !== 'undefined' && active === 'medicos') ? 'active' : '' %>">
-            Médicos
-          </a>
-          <a href="/consultas" class="<%= (typeof active !== 'undefined' && active === 'consultas') ? 'active' : '' %>">
-            Consultas
-          </a>
-        <% } %>
-
-        <a href="<%= admin ? '/admin/dashboard' : '/admin/login' %>"
-           class="<%= (typeof active !== 'undefined' && active === 'admin') ? 'active' : '' %>">
-          Admin
-        </a>
+<body class="<%= admin ? 'app-layout' : 'public-layout' %>">
+  <a href="#main-content" class="skip-link">Pular para o conteúdo</a>
+  <% if (admin) { %>
+    <button class="nav-toggle" type="button" aria-controls="main-navigation" aria-expanded="false" aria-label="Abrir menu de navegação">☰ <span>Menu</span></button>
+    <div class="nav-backdrop" data-close-menu></div>
+    <aside class="sidebar" id="main-navigation">
+      <a href="/admin/dashboard" class="brand">
+        <span class="brand-logo" aria-hidden="true">+</span>
+        <span class="brand-text"><strong>Clínica Médica</strong><small>GESTÃO DE ATENDIMENTOS</small></span>
+      </a>
+      <p class="nav-caption">ESPAÇO DE TRABALHO</p>
+      <nav class="nav-links" aria-label="Navegação principal">
+        <% const links = [
+          ['/admin/dashboard','admin','◫','Visão geral'],
+          ['/consultas','consultas','▦','Agenda de consultas'],
+          ['/pacientes','pacientes','◉','Pacientes'],
+          ['/medicos','medicos','✚','Equipe médica']
+        ]; %>
+        <% links.forEach(([url, key, symbol, label]) => { %>
+          <a href="<%= url %>" class="<%= section === key ? 'active' : '' %>" aria-current="<%= section === key ? 'page' : 'false' %>"><span class="nav-icon" aria-hidden="true"><%= symbol %></span><%= label %></a>
+        <% }) %>
       </nav>
-
-      <% if (admin) { %>
+      <div class="sidebar-note"><span class="status-dot"></span><div><strong>Tudo em um só lugar</strong><p>Mais organização para cuidar de cada atendimento.</p></div></div>
+      <div class="sidebar-account">
+        <div class="avatar" aria-hidden="true"><%= admin.nome.trim().slice(0,1).toUpperCase() || 'A' %></div>
+        <div class="account-name"><strong><%= admin.nome %></strong><small>Administrador</small></div>
         <form method="post" action="/admin/logout" class="inline-action">
           <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-          <button type="submit" class="logout-icon logout-button" title="Sair">Sair</button>
+          <button type="submit" class="logout-button" aria-label="Sair do sistema" title="Sair">↪</button>
         </form>
-      <% } %>
-    </div>
-  </header>
-
-  <main class="container main-content">
-    <% if (notice) { %>
-      <div class="notice notice-<%= notice.type %>" role="status" aria-live="polite"><%= notice.message %></div>
+      </div>
+    </aside>
+  <% } else { %>
+    <header class="public-header">
+      <a class="brand" href="/"><span class="brand-logo" aria-hidden="true">+</span><span class="brand-text"><strong>Clínica Médica</strong><small>GESTÃO DE ATENDIMENTOS</small></span></a>
+      <a href="/admin/login" class="btn outline">Acessar sistema</a>
+    </header>
+  <% } %>
+  <div class="workspace">
+    <% if (admin) { %>
+      <header class="workspace-header"><span>GESTÃO DA CLÍNICA <span class="breadcrumb-separator">/</span> <strong><%= title %></strong></span><span class="workspace-label"><span class="status-dot"></span>Área administrativa</span></header>
     <% } %>
-    <%- body %>
-  </main>
-
-  <footer class="footer">
-    <div class="container">
-      <small>&copy; 2026 - Clínica Médica</small>
-    </div>
-  </footer>
+    <main class="main-content" id="main-content" tabindex="-1">
+      <% if (notice) { %><div class="notice notice-<%= notice.type %>" role="status" aria-live="polite"><span aria-hidden="true">✓</span> <%= notice.message %></div><% } %>
+      <%- body %>
+    </main>
+    <footer class="footer"><span>Clínica Médica</span><span>Organização que aproxima o cuidado.</span></footer>
+  </div>
   <script src="/js/app.js" defer></script>
 </body>
 </html>

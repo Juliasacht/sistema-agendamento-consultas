@@ -130,3 +130,16 @@ export async function countConsultasHoje() {
   );
   return rows[0]?.total || 0;
 }
+
+export async function listConsultasHoje() {
+  const [[date]] = await pool.execute("SELECT DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS today");
+  const [rows] = await pool.execute(`
+    SELECT c.idConsulta, c.horario, c.status, p.nome AS pacienteNome, m.nome AS medicoNome
+    FROM Consultas c
+    JOIN Pacientes p ON p.idPaciente = c.idPaciente
+    JOIN Medicos m ON m.idMedico = c.idMedico
+    WHERE c.data = CURDATE()
+    ORDER BY c.horario, c.idConsulta LIMIT 6
+  `);
+  return { today: date.today, rows };
+}

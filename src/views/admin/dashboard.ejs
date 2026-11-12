@@ -1,51 +1,34 @@
-<div class="card dashboard-admin">
-  <div class="dashboard-header">
-    <div>
-      <h2>Dashboard Admin</h2>
-      <p class="subtitle">
-        Bem-vindo, <strong><%= admin.nome %></strong>
-      </p>
-    </div>
-    <div class="badge-role">
-      Admin
-    </div>
-  </div>
-
-  <div class="admin-stats">
-    <div class="admin-stat-card">
-      <div class="admin-stat-label">Pacientes cadastrados</div>
-      <div class="admin-stat-value"><%= stats.totalPacientes %></div>
-    </div>
-    <div class="admin-stat-card">
-      <div class="admin-stat-label">Médicos cadastrados</div>
-      <div class="admin-stat-value"><%= stats.totalMedicos %></div>
-    </div>
-    <div class="admin-stat-card">
-      <div class="admin-stat-label">Consultas de hoje</div>
-      <div class="admin-stat-value"><%= stats.consultasHoje %></div>
-    </div>
-  </div>
-
-  <div class="admin-links">
-    <a href="/pacientes" class="admin-card">
-      <div class="admin-card-icon">P</div>
-      <h3>Pacientes</h3>
-      <p>Visualizar, cadastrar e editar pacientes.</p>
-      <span class="admin-card-link">Ir para pacientes -></span>
-    </a>
-
-    <a href="/medicos" class="admin-card">
-      <div class="admin-card-icon">M</div>
-      <h3>Médicos</h3>
-      <p>Gerenciar médicos, especialidades e contatos.</p>
-      <span class="admin-card-link">Ir para médicos -></span>
-    </a>
-
-    <a href="/consultas" class="admin-card">
-      <div class="admin-card-icon">C</div>
-      <h3>Agenda</h3>
-      <p>Acompanhar, agendar e atualizar consultas.</p>
-      <span class="admin-card-link">Ir para agenda -></span>
-    </a>
-  </div>
+<section class="page-heading">
+  <div><p class="eyebrow">VISÃO GERAL</p><h1>Bom ter você por aqui, <%= admin.nome.split(' ')[0] %>.</h1><p class="subtitle">Uma visão clara da clínica para organizar o seu dia.</p></div>
+  <a href="/consultas/novo" class="btn"><span aria-hidden="true">+</span> Agendar consulta</a>
+</section>
+<section class="admin-stats" aria-label="Resumo da clínica">
+  <a class="metric-card" href="/pacientes"><span class="metric-label">Pacientes cadastrados<span class="metric-icon" aria-hidden="true">◉</span></span><strong class="metric-value"><%= stats.totalPacientes %></strong><span class="metric-foot">Ver pacientes <span aria-hidden="true">↗</span></span></a>
+  <a class="metric-card" href="/medicos"><span class="metric-label">Médicos cadastrados<span class="metric-icon blue" aria-hidden="true">✚</span></span><strong class="metric-value"><%= stats.totalMedicos %></strong><span class="metric-foot">Conhecer a equipe <span aria-hidden="true">↗</span></span></a>
+  <a class="metric-card" href="/consultas?data=<%= today %>"><span class="metric-label">Consultas de hoje<span class="metric-icon amber" aria-hidden="true">▦</span></span><strong class="metric-value"><%= stats.consultasHoje %></strong><span class="metric-foot">Consultar a agenda <span aria-hidden="true">↗</span></span></a>
+</section>
+<div class="dashboard-grid">
+  <section class="card today-card">
+    <div class="card-header"><div><p class="eyebrow">SEU DIA, ORGANIZADO</p><h2>Agenda de hoje</h2></div><a class="text-link" href="/consultas?data=<%= today %>">Ver agenda →</a></div>
+    <% if (!agendaHoje.length) { %>
+      <div class="empty-state"><span class="empty-icon" aria-hidden="true">▦</span><h3>Nenhuma consulta para hoje</h3><p>Os atendimentos do dia aparecerão aqui.<br />Que tal organizar o próximo?</p><a href="/consultas/novo" class="btn outline">Agendar consulta</a></div>
+    <% } else { %>
+      <div class="today-list">
+      <% agendaHoje.forEach(item => { %>
+        <a class="appointment-row" href="/consultas/editar/<%= item.idConsulta %>">
+          <span class="appointment-time"><%= item.horario.slice(0,5) %></span>
+          <span class="appointment-person"><strong><%= item.pacienteNome %></strong><small><%= item.medicoNome %></small></span>
+          <span class="badge <%= item.statusSlug %>"><%= item.status %></span>
+        </a>
+      <% }) %>
+      </div>
+    <% } %>
+  </section>
+  <aside class="quick-panel">
+    <p class="eyebrow">FACILITE A ROTINA</p><h2>O próximo passo<br /> é simples.</h2><p>Organize os cadastros e mantenha os atendimentos em dia.</p>
+    <a href="/pacientes/novo" class="quick-link"><span>Cadastrar paciente</span><span aria-hidden="true">↗</span></a>
+    <a href="/medicos/novo" class="quick-link"><span>Cadastrar médico</span><span aria-hidden="true">↗</span></a>
+    <a href="/consultas" class="quick-link"><span>Acompanhar consultas</span><span aria-hidden="true">↗</span></a>
+    <span class="quick-decoration" aria-hidden="true">+</span>
+  </aside>
 </div>

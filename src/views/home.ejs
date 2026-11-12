@@ -1,65 +1,9 @@
-<div class="card home-intro">
-  <h2>Bem-vindo(a) ao sistema da Clínica Médica</h2>
-  <p>
-    Este sistema foi desenvolvido para facilitar o dia a dia da recepção e da equipe médica,
-    organizando pacientes, médicos e consultas em um único lugar.
-  </p>
-  <p>
-    Use o menu acima ou os atalhos abaixo para navegar entre as principais áreas.
-  </p>
-</div>
-
-<div class="card" style="margin-top: 16px;">
-  <div class="card-header">
-    <h2>Atalhos rápidos</h2>
-  </div>
-
-  <div class="admin-links">
-    <a href="/pacientes" class="admin-card">
-      <div class="admin-card-icon">P</div>
-      <h3>Pacientes</h3>
-      <p>Cadastre novos pacientes, visualize dados de contato e atualize informações.</p>
-      <span class="admin-card-link">Ir para pacientes -></span>
-    </a>
-
-    <a href="/medicos" class="admin-card">
-      <div class="admin-card-icon">M</div>
-      <h3>Médicos</h3>
-      <p>Gerencie médicos, especialidades, CRM e telefones para contato.</p>
-      <span class="admin-card-link">Ir para médicos -></span>
-    </a>
-
-    <a href="/consultas" class="admin-card">
-      <div class="admin-card-icon">C</div>
-      <h3>Consultas</h3>
-      <p>Agende novas consultas, atualize o status e acompanhe a agenda.</p>
-      <span class="admin-card-link">Ir para consultas -></span>
-    </a>
-  </div>
-</div>
-
-<div class="card" style="margin-top: 16px;">
-  <div class="card-header">
-    <h2>Como usar o sistema</h2>
-  </div>
-
-  <ol style="margin: 0; padding-left: 18px; font-size: 14px;">
-    <li style="margin-bottom: 6px;">
-      <strong>Cadastre os médicos:</strong> acesse o menu <em>Médicos</em> e clique em "Novo Médico".
-    </li>
-    <li style="margin-bottom: 6px;">
-      <strong>Cadastre os pacientes:</strong> acesse <em>Pacientes</em> e utilize o botão "Novo Paciente".
-    </li>
-    <li style="margin-bottom: 6px;">
-      <strong>Agende as consultas:</strong> no menu <em>Consultas</em>, clique em "Nova Consulta",
-      selecione o paciente, o médico, a data, o horário e o status.
-    </li>
-    <li style="margin-bottom: 6px;">
-      <strong>Acompanhe a agenda:</strong> use os filtros de busca em consultas para localizar por paciente,
-      médico, data ou status.
-    </li>
-    <li>
-      <strong>Área do Admin:</strong> pelo menu <em>Admin</em> você acessa o painel com visão geral da clínica.
-    </li>
-  </ol>
-</div>
+<section class="home-hero">
+  <div><p class="eyebrow">CUIDADO COMEÇA COM ORGANIZAÇÃO</p><h1>Uma rotina mais leve.<br /><span>Um cuidado mais próximo.</span></h1><p>Pacientes, equipe médica e consultas em um único espaço. Tudo o que você precisa para organizar o dia a dia da clínica.</p><a href="<%= admin ? '/admin/dashboard' : '/admin/login' %>" class="btn"><%= admin ? 'Ir para o painel' : 'Acessar sistema' %> <span aria-hidden="true">↗</span></a></div>
+  <div class="hero-illustration" aria-hidden="true"><span class="hero-cross">+</span><div class="hero-note"><span class="status-dot"></span>Mais clareza em cada atendimento.</div></div>
+</section>
+<section class="feature-grid" aria-label="Funcionalidades">
+  <div class="card feature-card"><span class="metric-icon">◉</span><h2>Pacientes por perto</h2><p>Cadastros e contatos organizados para facilitar cada atendimento.</p></div>
+  <div class="card feature-card"><span class="metric-icon blue">✚</span><h2>Equipe conectada</h2><p>Médicos e especialidades disponíveis em um só lugar.</p></div>
+  <div class="card feature-card"><span class="metric-icon amber">▦</span><h2>Agenda sob controle</h2><p>Horários claros, menos conflitos e mais tranquilidade na rotina.</p></div>
+</section>

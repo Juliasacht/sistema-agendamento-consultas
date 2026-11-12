@@ -35,7 +35,7 @@ test('confirmacao cancelada impede envio; confirmacao aceita permite enviar', as
   class Form { constructor() { this.dataset = { confirm: 'Excluir o paciente "Ana"? Esta ação não pode ser desfeita.' }; } }
   runInNewContext(source, {
     HTMLFormElement: Form,
-    document: { addEventListener(type, handler) { assert.equal(type, 'submit'); submit = handler; } },
+    document: { addEventListener(type, handler) { if (type === 'submit') submit = handler; }, querySelector() { return null; }, querySelectorAll() { return []; } },
     window: { confirm(text) { message = text; return approved; } },
   });
   let prevented = false;
@@ -46,4 +46,26 @@ test('confirmacao cancelada impede envio; confirmacao aceita permite enviar', as
   approved = true; prevented = false;
   submit(event);
   assert.equal(prevented, false);
+});
+
+test('menu alterna estado acessivel e fecha com Escape', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const { runInNewContext } = await import('node:vm');
+  const source = await readFile(new URL('../public/js/app.js', import.meta.url), 'utf8');
+  let open = false, expanded = 'false', click, keydown, focused = false, close;
+  const button = { setAttribute(name, value) { if (name === 'aria-expanded') expanded = value; },
+    addEventListener(type, handler) { click = handler; }, focus() { focused = true; } };
+  runInNewContext(source, {
+    HTMLFormElement: class {},
+    document: {
+      body: { classList: { toggle() { open = !open; return open; }, remove() { open = false; }, contains() { return open; } } },
+      querySelector(selector) { return selector === '.nav-toggle' ? button : { addEventListener(type, handler) { close = handler; } }; },
+      querySelectorAll() { return []; },
+      addEventListener(type, handler) { if (type === 'keydown') keydown = handler; },
+    },
+    window: { confirm() { return true; } },
+  });
+  click(); assert.equal(open, true); assert.equal(expanded, 'true');
+  keydown({ key: 'Escape' }); assert.equal(open, false); assert.equal(expanded, 'false'); assert.equal(focused, true);
+  click(); close(); assert.equal(open, false);
 });

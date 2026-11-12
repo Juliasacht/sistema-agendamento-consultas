@@ -178,6 +178,22 @@ test('fluxo completo com MySQL real', { skip: process.env.RUN_INTEGRATION !== '1
       assert.equal((await request('/consultas?data=2030-02-30&status=invalido')).status, 200);
     });
 
+
+    await t.test('painel exibe os dados reais da agenda de hoje', async () => {
+      const [[date]] = await conn.execute("SELECT DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS today");
+      const observation = token + '_dashboard';
+      const response = await request('/consultas/novo', { data: date.today, horario: '08:00', status: 'Confirmada', idPaciente: String(patientId), idMedico: String(doctorId), observacoes: observation });
+      assert.equal(response.status, 302);
+      try {
+        const dashboard = await request('/admin/dashboard');
+        assert.equal(dashboard.status, 200);
+        assert.ok(dashboard.text.includes('Paciente editado ' + token));
+        assert.ok(dashboard.text.includes('08:00'));
+        assert.ok(dashboard.text.includes('Agenda de hoje'));
+        assert.ok(dashboard.text.includes('Confirmada'));
+      } finally { await conn.execute('DELETE FROM Consultas WHERE observacoes = ?', [observation]); }
+    });
+
     await t.test('regras da agenda com concorrencia e cancelamento', async t => {
       const [p] = await conn.execute('INSERT INTO Pacientes (nome,email) VALUES (?,?)', ['Paciente extra ' + token, 'extra_' + token + '@example.com']);
       const extraPatient = p.insertId;

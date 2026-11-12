@@ -1,5 +1,7 @@
-<div class="card">
+<div class="card form-card">
   <h2><%= editing ? 'Editar Consulta' : 'Agendar Consulta' %></h2>
+
+  <p class="subtitle form-subtitle">Organize os dados do atendimento. Campos com * são obrigatórios.</p>
 
   <% if (errors.geral) { %>
     <p class="error"><%= errors.geral %></p>
@@ -75,7 +77,7 @@
       <% if (errors.observacoes) { %><span class="error"><%= errors.observacoes %></span><% } %>
     </div>
 
-    <button class="btn" type="submit" <%= !pacientes.length || !medicos.length ? 'disabled' : '' %>><%= editing ? 'Salvar alterações' : 'Agendar' %></button>
-    <a href="/consultas" class="btn outline">Voltar à agenda</a>
+    <div class="form-actions"><button class="btn" type="submit" <%= !pacientes.length || !medicos.length ? 'disabled' : '' %>><%= editing ? 'Salvar alterações' : 'Agendar' %></button>
+    <a href="/consultas" class="btn outline">Voltar à agenda</a></div>
   </form>
 </div>

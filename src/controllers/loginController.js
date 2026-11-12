@@ -10,7 +10,7 @@ export function createLoginHandler(findAdminByLogin) {
     if (!form.login || form.login.length > 100) errors.login = 'Informe um login de até 100 caracteres';
     if (!senha || senha.length > 128) errors.senha = 'Informe uma senha de até 128 caracteres';
     const renderError = (status, errors) => res.status(status).render('admin/login', {
-      title: 'Login Admin', active: 'admin', errors, form,
+      title: 'Acessar sistema', active: 'admin', errors, form,
     });
     if (Object.keys(errors).length) return renderError(400, errors);
 
