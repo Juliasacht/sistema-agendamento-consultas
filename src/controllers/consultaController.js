@@ -1,3 +1,4 @@
+import { prepareConsulta } from '../validators/consultaValidator.js';
 import {
   createConsulta,
   listConsultas,
@@ -7,17 +8,6 @@ import {
 } from '../models/consultaModel.js';
 import { listPacientes } from '../models/pacienteModel.js';
 import { listMedicos } from '../models/medicoModel.js';
-
-function validateConsulta(form) {
-  const errors = {};
-
-  if (!form.data) errors.data = 'Informe a data';
-  if (!form.horario) errors.horario = 'Informe o horário';
-  if (!form.idPaciente) errors.idPaciente = 'Selecione o paciente';
-  if (!form.idMedico) errors.idMedico = 'Selecione o médico';
-
-  return errors;
-}
 
 function formatDateInput(value) {
   if (!value) return '';
@@ -91,8 +81,7 @@ export async function getCreate(req, res) {
 }
 
 export async function postCreate(req, res) {
-  const form = { ...req.body };
-  const errors = validateConsulta(form);
+  const { form, errors } = prepareConsulta(req.body);
 
   try {
     if (Object.keys(errors).length) {
@@ -139,8 +128,7 @@ export async function getEdit(req, res) {
 
 export async function postEdit(req, res) {
   const id = req.params.id;
-  const form = { ...req.body };
-  const errors = validateConsulta(form);
+  const { form, errors } = prepareConsulta(req.body);
 
   try {
     if (Object.keys(errors).length) {

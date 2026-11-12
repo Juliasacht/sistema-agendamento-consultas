@@ -7,20 +7,20 @@
 
   <form method="post" class="form">
     <div class="form-group">
-      <label>Data*</label>
-      <input type="date" name="data" value="<%= form.data || '' %>" />
+      <label for="data">Data*</label>
+      <input type="date" id="data" name="data" required value="<%= form.data || '' %>" />
       <% if (errors.data) { %><span class="error"><%= errors.data %></span><% } %>
     </div>
 
     <div class="form-group">
-      <label>Horário*</label>
-      <input type="time" name="horario" value="<%= form.horario || '' %>" />
+      <label for="horario">Horário*</label>
+      <input type="time" id="horario" name="horario" required value="<%= form.horario || '' %>" />
       <% if (errors.horario) { %><span class="error"><%= errors.horario %></span><% } %>
     </div>
 
     <div class="form-group">
-      <label>Status</label>
-      <select name="status">
+      <label for="status">Status</label>
+      <select id="status" name="status">
         <% const statusOptions = ['Agendada', 'Confirmada', 'Realizada', 'Cancelada', 'Não Compareceu']; %>
 
         <% statusOptions.forEach(s => { %>
@@ -32,8 +32,8 @@
     </div>
 
     <div class="form-group">
-      <label>Paciente*</label>
-      <select name="idPaciente">
+      <label for="idPaciente">Paciente*</label>
+      <select id="idPaciente" name="idPaciente" required>
         <option value="">Selecione</option>
         <% pacientes.forEach(p => { %>
           <option value="<%= p.idPaciente %>" <%= String(form.idPaciente) === String(p.idPaciente) ? 'selected' : '' %>>
@@ -45,8 +45,8 @@
     </div>
 
     <div class="form-group">
-      <label>Médico*</label>
-      <select name="idMedico">
+      <label for="idMedico">Médico*</label>
+      <select id="idMedico" name="idMedico" required>
         <option value="">Selecione</option>
         <% medicos.forEach(m => { %>
           <option value="<%= m.idMedico %>" <%= String(form.idMedico) === String(m.idMedico) ? 'selected' : '' %>>
@@ -58,8 +58,9 @@
     </div>
 
     <div class="form-group">
-      <label>Observações</label>
-      <textarea name="observacoes"><%= form.observacoes || '' %></textarea>
+      <label for="observacoes">Observações</label>
+      <textarea id="observacoes" name="observacoes" maxlength="5000"><%= form.observacoes || '' %></textarea>
+      <% if (errors.observacoes) { %><span class="error"><%= errors.observacoes %></span><% } %>
     </div>
 
     <button class="btn" type="submit"><%= editing ? 'Salvar alterações' : 'Agendar' %></button>
