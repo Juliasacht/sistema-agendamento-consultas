@@ -91,17 +91,23 @@ O script cria o banco `clinica_db` e as tabelas `Admins`, `Pacientes`, `Medicos`
 
 Se utilizar outro nome de banco, ajuste `CREATE DATABASE` e `USE` no script e `DB_NAME` no `.env`. O script não apaga registros nem modifica a estrutura de tabelas já existentes; ele se destina à instalação inicial.
 
-### Preparar o acesso local
+### Criar o administrador
 
-Não existe usuário administrador padrão nem tela de cadastro de administradores. Para testar a versão atual localmente, cadastre um usuário no MySQL:
+Não existe usuário administrador padrão nem tela pública de cadastro. Após preparar o banco, execute em um terminal interativo:
 
-```sql
-USE clinica_db;
-INSERT INTO Admins (nome, login, senha)
-VALUES ('Administrador local', 'admin.local', 'SUBSTITUA_POR_UMA_SENHA_LOCAL');
+```bash
+npm run admin:create
 ```
 
-Substitua o valor de exemplo por uma senha de teste antes de executar. A autenticação atual compara senhas em texto puro; este procedimento serve apenas ao ambiente local. O armazenamento com hash precisa ser implementado antes de disponibilizar o login publicamente.
+Informe nome, login e uma senha de 12 a 128 caracteres. A senha e a confirmação ficam ocultas durante a digitação. O comando armazena apenas o hash scrypt com salt aleatório, sem gravar a senha em texto puro.
+
+Se já existir um administrador cadastrado na versão anterior, redefina sua senha antes de tentar entrar:
+
+```bash
+npm run admin:create -- --reset-password
+```
+
+Informe o login existente e a nova senha. Senhas antigas em texto puro não são aceitas pelo login; a redefinição preserva os demais dados do administrador. Um login duplicado não é sobrescrito pelo comando de criação.
 
 ### Iniciar o servidor
 
@@ -125,9 +131,12 @@ http://localhost:3000
 
 Para entrar na área administrativa, acesse `http://localhost:3000/admin/login` e use as credenciais cadastradas.
 
+## Testes
+
+Execute `npm test` para verificar o hash de senhas e o fluxo de autenticação com um banco simulado. Os testes não precisam de MySQL. A instalação do schema e os comandos de administrador devem ser validados também em um banco local.
+
 ## Melhorias futuras
 
-- Implementar armazenamento de senhas com hash e criação segura do administrador
 - Criar testes automatizados
 - Melhorar validações dos formulários
 - Adicionar documentação com prints das telas

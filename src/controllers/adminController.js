@@ -1,3 +1,4 @@
+import { createLoginHandler } from './loginController.js';
 import { findAdminByLogin } from '../models/adminModel.js';
 import { countPacientes } from '../models/pacienteModel.js';
 import { countMedicos } from '../models/medicoModel.js';
@@ -16,46 +17,7 @@ export function getLogin(req, res) {
   });
 }
 
-export async function postLogin(req, res) {
-  const form = { ...req.body };
-  const errors = {};
-
-  if (!form.login) errors.login = 'Informe o login';
-  if (!form.senha) errors.senha = 'Informe a senha';
-
-  if (Object.keys(errors).length) {
-    return res.status(400).render('admin/login', {
-      title: 'Login Admin',
-      active: 'admin',
-      errors,
-      form,
-    });
-  }
-
-  try {
-    const admin = await findAdminByLogin(form.login);
-
-    if (!admin || admin.senha !== form.senha) {
-      return res.status(400).render('admin/login', {
-        title: 'Login Admin',
-        active: 'admin',
-        errors: { geral: 'Login ou senha inválidos' },
-        form,
-      });
-    }
-
-    req.session.admin = {
-      id: admin.idAdmin,
-      nome: admin.nome,
-      login: admin.login,
-    };
-    res.locals.admin = req.session.admin;
-
-    return res.redirect('/admin/dashboard');
-  } catch (err) {
-    return res.status(500).send('Erro ao autenticar: ' + err.message);
-  }
-}
+export const postLogin = createLoginHandler(findAdminByLogin);
 
 export async function getDashboard(req, res) {
   try {
