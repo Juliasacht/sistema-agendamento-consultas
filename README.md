@@ -133,7 +133,28 @@ Para entrar na área administrativa, acesse `http://localhost:3000/admin/login` 
 
 ## Testes
 
-Execute `npm test` para verificar o hash de senhas e o fluxo de autenticação com um banco simulado. Os testes não precisam de MySQL. A instalação do schema e os comandos de administrador devem ser validados também em um banco local.
+Execute `npm test` para verificar o hash de senhas, o fluxo de autenticação e a validação das consultas. Esses testes não precisam de MySQL; o teste de integração fica desativado por padrão.
+
+### Integração com MySQL real
+
+O arquivo `test/integration.test.js` inicia um servidor temporário e testa requisições HTTP reais, incluindo login, proteção das rotas, cadastro, busca, edição e exclusão de pacientes, médicos e consultas, atualização de status e logout. As gravações são conferidas diretamente no banco.
+
+Com o MySQL em execução, configure no PowerShell:
+
+```powershell
+$env:RUN_INTEGRATION = "1"
+$env:DB_HOST = "127.0.0.1"
+$env:DB_PORT = "3306"
+$env:DB_USER = "seu_usuario_de_testes"
+$env:DB_PASS = "sua_senha_de_testes"
+$env:DB_NAME = "clinica_integration_test"
+node --test test/integration.test.js
+Remove-Item Env:RUN_INTEGRATION
+```
+
+Use um banco exclusivo de testes: o comando exige um nome terminado em `_test` e um usuário com permissão para criar esse banco e suas tabelas. Os dados fictícios recebem identificadores aleatórios e são removidos ao final; o banco permanece disponível. O teste não usa o banco definido no `.env` quando as variáveis acima estão configuradas.
+
+A porta HTTP padrão é `33318` e pode ser alterada pela variável `INTEGRATION_PORT`. Não execute duas instâncias do teste na mesma porta. Os testes validam o funcionamento por HTTP; a avaliação visual e a responsividade são uma etapa separada.
 
 ## Melhorias futuras
 
