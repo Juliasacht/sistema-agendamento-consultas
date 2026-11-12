@@ -142,6 +142,19 @@ http://localhost:3000
 
 Para entrar na área administrativa, acesse `http://localhost:3000/admin/login` e use as credenciais cadastradas.
 
+## Demonstração
+
+Há uma base fictícia com 6 pacientes, 3 médicos e 8 consultas, além de um [roteiro de 90 segundos](docs/DEMONSTRACAO.md) para mostrar cadastro, agendamento e atualização.
+
+Copie `.env.demo.example` para `.env.demo`, preencha as credenciais do MySQL e a senha do administrador de demonstração. Com o MySQL em execução:
+
+```bash
+npm run demo:seed
+npm run demo:start
+```
+
+Use o login `demo.admin` e a senha definida em `DEMO_ADMIN_PASSWORD`. A carga aceita somente bancos com nome terminado em `_demo`; os registros e as senhas existentes são preservados.
+
 ## Interface
 
 A interface usa uma identidade visual com azul profundo, verde e fundos claros, fontes do sistema e componentes padronizados. No computador, a navegação fica na lateral; em telas menores, o menu pode ser aberto pelo botão Menu, fechado pelo fundo ou pela tecla Escape.

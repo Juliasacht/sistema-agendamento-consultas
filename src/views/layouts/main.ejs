@@ -51,6 +51,7 @@
       <header class="workspace-header"><span>GESTÃO DA CLÍNICA <span class="breadcrumb-separator">/</span> <strong><%= title %></strong></span><span class="workspace-label"><span class="status-dot"></span>Área administrativa</span></header>
     <% } %>
     <main class="main-content" id="main-content" tabindex="-1">
+      <% if (typeof demoMode !== 'undefined' && demoMode) { %><div class="notice" role="status">Ambiente de demonstração · todos os dados são fictícios.</div><% } %>
       <% if (notice) { %><div class="notice notice-<%= notice.type %>" role="status" aria-live="polite"><span aria-hidden="true">✓</span> <%= notice.message %></div><% } %>
       <%- body %>
     </main>

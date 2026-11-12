@@ -40,6 +40,7 @@ app.use(
 
 app.use((req, res, next) => {
   res.locals.admin = req.session?.admin || null;
+  res.locals.demoMode = process.env.DEMO_MODE === '1';
   next();
 });
 
@@ -71,6 +72,6 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 const PORT = process.env.APP_PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, process.env.APP_HOST || undefined, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
 });
