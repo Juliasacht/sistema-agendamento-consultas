@@ -19,6 +19,17 @@ A aplicação permite administrar pacientes, médicos e consultas em uma área p
 - Layout com páginas EJS
 - Configuração por variáveis de ambiente
 
+## Regras da agenda
+
+- Cada consulta ocupa 30 minutos, inclusive quando cruza a meia-noite. O valor está centralizado em `src/config/agenda.js`.
+- Agendada e Confirmada reservam o intervalo para médico e paciente. Uma consulta pode começar exatamente ao término da anterior.
+- O cadastro e a edição verificam os conflitos dentro de uma transação, com bloqueio dos registros de médico e paciente para proteger reservas simultâneas.
+- Cancelar mantém o registro e libera o intervalo. Cancelar novamente não altera o resultado.
+- Uma consulta cancelada pode voltar a Agendada ou Confirmada, desde que haja disponibilidade; para finalizá-la, é necessário reativá-la primeiro.
+- Realizada e Não Compareceu são estados finais: permitem editar apenas observações e não reservam novos horários.
+- Médico ou paciente inexistente impede a gravação. Consultas inexistentes retornam 404 na edição, exclusão e cancelamento.
+- Excluir continua sendo uma remoção permanente, distinta do cancelamento.
+
 ## Tecnologias utilizadas
 
 - Node.js
@@ -158,7 +169,6 @@ A porta HTTP padrão é `33318` e pode ser alterada pela variável `INTEGRATION_
 
 ## Melhorias futuras
 
-- Criar testes automatizados
 - Melhorar validações dos formulários
 - Adicionar documentação com prints das telas
 - Publicar uma versão online do projeto

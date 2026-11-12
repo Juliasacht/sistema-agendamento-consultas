@@ -7,6 +7,7 @@ import {
   getEdit,
   postEdit,
   getDelete,
+  postCancel,
 } from '../controllers/consultaController.js';
 
 const router = Router();
@@ -19,5 +20,6 @@ router.post('/novo', postCreate);
 router.get('/editar/:id', getEdit);
 router.post('/editar/:id', postEdit);
 router.get('/excluir/:id', getDelete);
+router.post('/cancelar/:id', postCancel);
 
 export default router;

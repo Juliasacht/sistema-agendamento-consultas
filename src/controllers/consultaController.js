@@ -1,3 +1,5 @@
+import { CONSULTA_DURATION_MINUTES } from '../config/agenda.js';
+import { AgendaError, validConsultaId } from '../utils/agendaError.js';
 import { prepareConsulta } from '../validators/consultaValidator.js';
 import {
   createConsulta,
@@ -5,6 +7,7 @@ import {
   getConsultaById,
   updateConsulta,
   deleteConsulta,
+  cancelConsulta,
 } from '../models/consultaModel.js';
 import { listPacientes } from '../models/pacienteModel.js';
 import { listMedicos } from '../models/medicoModel.js';
@@ -32,12 +35,13 @@ async function renderConsultaForm(res, { status = 200, title, form, errors, edit
     pacientes,
     medicos,
     editing,
+    durationMinutes: CONSULTA_DURATION_MINUTES,
   });
 }
 
 export async function getList(req, res) {
   try {
-    const q = req.query.q || '';
+    const q = typeof req.query.q === 'string' ? req.query.q : '';
     const consultasRaw = await listConsultas({ search: q });
 
     const consultas = consultasRaw.map((consulta) => {
@@ -98,9 +102,9 @@ export async function postCreate(req, res) {
     return res.redirect('/consultas');
   } catch (err) {
     return await renderConsultaForm(res, {
-      status: 500,
+      status: err instanceof AgendaError ? err.status : 500,
       title: 'Agendar Consulta',
-      errors: { geral: 'Erro ao salvar consulta: ' + err.message },
+      errors: err instanceof AgendaError ? { [err.field]: err.message } : { geral: 'Não foi possível salvar a consulta. Tente novamente.' },
       form,
       editing: false,
     });
@@ -128,9 +132,11 @@ export async function getEdit(req, res) {
 
 export async function postEdit(req, res) {
   const id = req.params.id;
+  if (!validConsultaId(id)) return res.status(404).send('Consulta não encontrada');
   const { form, errors } = prepareConsulta(req.body);
 
   try {
+    if (!(await getConsultaById(id))) return res.status(404).send('Consulta não encontrada');
     if (Object.keys(errors).length) {
       return await renderConsultaForm(res, {
         status: 400,
@@ -145,9 +151,9 @@ export async function postEdit(req, res) {
     return res.redirect('/consultas');
   } catch (err) {
     return await renderConsultaForm(res, {
-      status: 500,
+      status: err instanceof AgendaError ? err.status : 500,
       title: 'Editar Consulta',
-      errors: { geral: 'Erro ao atualizar consulta: ' + err.message },
+      errors: err instanceof AgendaError ? { [err.field]: err.message } : { geral: 'Não foi possível atualizar a consulta. Tente novamente.' },
       form,
       editing: true,
     });
@@ -159,6 +165,16 @@ export async function getDelete(req, res) {
     await deleteConsulta(req.params.id);
     return res.redirect('/consultas');
   } catch (err) {
-    return res.status(500).send('Erro ao excluir consulta: ' + err.message);
+    return res.status(err instanceof AgendaError ? err.status : 500).send(err instanceof AgendaError ? err.message : 'Não foi possível excluir a consulta.');
+  }
+}
+
+export async function postCancel(req, res) {
+  try {
+    await cancelConsulta(req.params.id);
+    return res.redirect('/consultas');
+  } catch (err) {
+    return res.status(err instanceof AgendaError ? err.status : 500).send(
+      err instanceof AgendaError ? err.message : 'Não foi possível cancelar a consulta.');
   }
 }

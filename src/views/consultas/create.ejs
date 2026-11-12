@@ -5,6 +5,9 @@
     <p class="error"><%= errors.geral %></p>
   <% } %>
 
+  <p class="subtitle">Cada consulta reserva <%= durationMinutes %> minutos. Consultas agendadas e confirmadas não podem se sobrepor para o mesmo médico ou paciente.</p>
+  <p class="subtitle">O status Cancelada libera o horário e mantém o registro. Para reativar, escolha Agendada ou Confirmada. Consultas finalizadas permitem editar apenas observações.</p>
+
   <form method="post" class="form">
     <div class="form-group">
       <label for="data">Data*</label>
@@ -29,6 +32,7 @@
           </option>
         <% }) %>
       </select>
+      <% if (errors.status) { %><span class="error"><%= errors.status %></span><% } %>
     </div>
 
     <div class="form-group">
@@ -64,6 +68,6 @@
     </div>
 
     <button class="btn" type="submit"><%= editing ? 'Salvar alterações' : 'Agendar' %></button>
-    <a href="/consultas" class="btn outline">Cancelar</a>
+    <a href="/consultas" class="btn outline">Voltar à agenda</a>
   </form>
 </div>

@@ -41,6 +41,11 @@
             </td>
             <td class="actions" data-label="Ações">
               <a href="/consultas/editar/<%= c.idConsulta %>">Editar</a>
+              <% if (['agendada', 'confirmada'].includes(c.status.toLowerCase())) { %>
+                <form method="post" action="/consultas/cancelar/<%= c.idConsulta %>" style="display:inline" onsubmit="return confirm('Cancelar esta consulta e liberar o horário?')">
+                  <button class="btn outline" type="submit">Cancelar consulta</button>
+                </form>
+              <% } %>
               &nbsp;|&nbsp;
               <a href="/consultas/excluir/<%= c.idConsulta %>" onclick="return confirm('Excluir consulta?')">Excluir</a>
             </td>

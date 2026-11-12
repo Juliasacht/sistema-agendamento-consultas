@@ -130,6 +130,107 @@ test('fluxo completo com MySQL real', { skip: process.env.RUN_INTEGRATION !== '1
       assert.equal(updated[0].status, 'Realizada');
       assert.equal(updated[0].horario, '11:00:00');
     });
+
+    await t.test('regras da agenda com concorrencia e cancelamento', async t => {
+      const [p] = await conn.execute('INSERT INTO Pacientes (nome,email) VALUES (?,?)', ['Paciente extra ' + token, 'extra_' + token + '@example.com']);
+      const extraPatient = p.insertId;
+      const [m] = await conn.execute('INSERT INTO Medicos (nome,crm,especialidade) VALUES (?,?,?)', ['Médico extra ' + token, 'extra_' + token, 'Teste']);
+      const extraDoctor = m.insertId;
+      const created = [];
+      const form = { data: '2031-04-01', horario: '10:00', status: 'Agendada', idPaciente: String(patientId), idMedico: String(doctorId), observacoes: token + '_agenda' };
+      const create = async overrides => {
+        const values = { ...form, ...overrides, observacoes: token + '_' + randomBytes(6).toString('hex') };
+        const response = await request('/consultas/novo', values);
+        let id;
+        if (response.status === 302) {
+          const [rows] = await conn.execute('SELECT idConsulta FROM Consultas WHERE observacoes = ?', [values.observacoes]);
+          assert.equal(rows.length, 1);
+          id = rows[0].idConsulta; created.push(id);
+        }
+        return { ...response, id, form: values };
+      };
+      try {
+        const first = await create({});
+        assert.equal(first.status, 302);
+        await t.test('bloqueia sobreposicao de medico e de paciente e aceita limite exato', async () => {
+          const doctorConflict = await create({ horario: '10:15', idPaciente: String(extraPatient) });
+          assert.equal(doctorConflict.status, 409);
+          assert.ok(doctorConflict.text.includes('O médico já possui'));
+          const patientConflict = await create({ horario: '10:15', idMedico: String(extraDoctor) });
+          assert.equal(patientConflict.status, 409);
+          assert.ok(patientConflict.text.includes('O paciente já possui'));
+          assert.equal((await create({ horario: '09:45' })).status, 409);
+          assert.equal((await create({ horario: '10:15', idPaciente: String(extraPatient), idMedico: String(extraDoctor) })).status, 302);
+          const boundary = await create({ horario: '10:30' });
+          assert.equal(boundary.status, 302);
+          assert.equal((await request('/consultas/editar/' + first.id, first.form)).status, 302);
+          assert.equal((await request('/consultas/editar/' + boundary.id, { ...boundary.form, horario: '10:15' })).status, 409);
+          const [rows] = await conn.execute('SELECT horario FROM Consultas WHERE idConsulta = ?', [boundary.id]);
+          assert.equal(rows[0].horario, '10:30:00');
+        });
+        await t.test('cancelar preserva registro, libera vaga e reativar revalida conflitos', async () => {
+          assert.equal((await request('/consultas/cancelar/' + first.id, {})).status, 302);
+          assert.equal((await request('/consultas/cancelar/' + first.id, {})).status, 302);
+          const [rows] = await conn.execute('SELECT status FROM Consultas WHERE idConsulta = ?', [first.id]);
+          assert.equal(rows[0].status, 'Cancelada');
+          const replacement = await create({});
+          assert.equal(replacement.status, 302);
+          assert.equal((await request('/consultas/editar/' + first.id, first.form)).status, 409);
+          assert.equal((await request('/consultas/editar/' + first.id, { ...first.form, status: 'Realizada' })).status, 409);
+          assert.equal((await request('/consultas/cancelar/' + replacement.id, {})).status, 302);
+          assert.equal((await request('/consultas/editar/' + first.id, { ...first.form, status: 'Confirmada' })).status, 302);
+        });
+        await t.test('consultas finalizadas nao podem ser canceladas nem remarcadas', async () => {
+          const completed = { ...first.form, status: 'Realizada' };
+          assert.equal((await request('/consultas/editar/' + first.id, completed)).status, 302);
+          assert.equal((await request('/consultas/cancelar/' + first.id, {})).status, 409);
+          const invalidStatus = await request('/consultas/editar/' + first.id, { ...completed, status: 'Cancelada' });
+          assert.equal(invalidStatus.status, 409);
+          assert.ok(invalidStatus.text.includes('Consultas finalizadas'));
+          assert.equal((await request('/consultas/editar/' + first.id, { ...completed, horario: '14:00' })).status, 409);
+          assert.equal((await request('/consultas/editar/' + first.id, { ...completed, observacoes: 'Observação atualizada' })).status, 302);
+          const missed = await create({ horario: '12:00', status: 'Não Compareceu' });
+          assert.equal(missed.status, 302);
+          assert.equal((await request('/consultas/cancelar/' + missed.id, {})).status, 409);
+        });
+        await t.test('duas reservas simultaneas nao ocupam o mesmo medico ou paciente', async () => {
+          const doctorResults = await Promise.all([
+            create({ horario: '14:00' }),
+            create({ horario: '14:15', idPaciente: String(extraPatient) }),
+          ]);
+          assert.deepEqual(doctorResults.map(r => r.status).sort(), [302, 409]);
+          const patientResults = await Promise.all([
+            create({ horario: '15:00' }),
+            create({ horario: '15:15', idMedico: String(extraDoctor) }),
+          ]);
+          assert.deepEqual(patientResults.map(r => r.status).sort(), [302, 409]);
+        });
+        await t.test('verifica intervalos que atravessam a meia-noite', async () => {
+          assert.equal((await create({ data: '2031-05-01', horario: '23:45' })).status, 302);
+          assert.equal((await create({ data: '2031-05-02', horario: '00:00' })).status, 409);
+          assert.equal((await create({ data: '2031-05-02', horario: '00:15' })).status, 302);
+        });
+        await t.test('referencias inexistentes nao geram gravacao nem erro SQL na resposta', async () => {
+          for (const [field, message] of [['idPaciente', 'Paciente não encontrado'], ['idMedico', 'Médico não encontrado']]) {
+            const response = await create({ horario: '18:00', [field]: '4294967295' });
+            assert.equal(response.status, 422);
+            assert.ok(response.text.includes(message));
+            assert.equal(response.text.includes('FOREIGN KEY'), false);
+          }
+          for (const id of ['4294967295', 'abc', '0']) {
+            assert.equal((await request('/consultas/editar/' + id)).status, 404);
+            assert.equal((await request('/consultas/editar/' + id, form)).status, 404);
+            assert.equal((await request('/consultas/cancelar/' + id, {})).status, 404);
+            assert.equal((await request('/consultas/excluir/' + id)).status, 404);
+          }
+        });
+      } finally {
+        for (const id of created) await conn.execute('DELETE FROM Consultas WHERE idConsulta = ?', [id]);
+        await conn.execute('DELETE FROM Pacientes WHERE idPaciente = ?', [extraPatient]);
+        await conn.execute('DELETE FROM Medicos WHERE idMedico = ?', [extraDoctor]);
+      }
+    });
+
     await t.test('excluir consulta, paciente e medico', async () => {
       for (const [url, table, key, id] of [
         ['/consultas/excluir/', 'Consultas', 'idConsulta', appointmentId],
