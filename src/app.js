@@ -41,6 +41,7 @@ app.use(
 app.use((req, res, next) => {
   res.locals.admin = req.session?.admin || null;
   res.locals.demoMode = process.env.DEMO_MODE === '1';
+  res.locals.canRegister = process.env.DEMO_MODE === '1' && process.env.NODE_ENV !== 'production';
   next();
 });
 

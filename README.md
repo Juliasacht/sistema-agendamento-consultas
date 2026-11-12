@@ -155,6 +155,12 @@ npm run demo:start
 
 Use o login `demo.admin` e a senha definida em `DEMO_ADMIN_PASSWORD`. A carga aceita somente bancos com nome terminado em `_demo`; os registros e as senhas existentes são preservados.
 
+## Cadastro de acesso
+
+No modo de demonstração, a tela de entrada oferece a opção Criar conta. Informe nome, login e uma senha de 12 a 128 caracteres, confirme a senha e entre com o novo acesso. Logins duplicados são rejeitados, as senhas são armazenadas com hash e o cadastro tem proteção CSRF e limite de cinco tentativas por IP a cada 15 minutos.
+
+As novas contas possuem acesso administrativo à mesma base fictícia da demonstração. Fora desse modo, a rota de cadastro fica bloqueada; administradores continuam sendo criados pelo comando `npm run admin:create`.
+
 ## Interface
 
 A interface usa uma identidade visual com azul profundo, verde e fundos claros, fontes do sistema e componentes padronizados. No computador, a navegação fica na lateral; em telas menores, o menu pode ser aberto pelo botão Menu, fechado pelo fundo ou pela tecla Escape.

@@ -1,0 +1,23 @@
+<section class="auth-shell auth-register" aria-label="Cadastro de conta">
+  <div class="auth-art">
+    <a class="auth-brand" href="/"><span class="brand-logo" aria-hidden="true">+</span><span>Clínica Médica<small>CUIDADO EM CADA DETALHE</small></span></a>
+    <div class="auth-pitch"><span class="auth-kicker"><span></span> Um novo começo</span><h1>Seu próximo<br />passo começa<br /> <em>com cuidado.</em></h1><p>Crie seu acesso e conheça uma forma<br />mais simples de organizar a clínica.</p></div>
+    <div class="auth-visual" aria-hidden="true"><div class="auth-orbit orbit-one"></div><div class="auth-orbit orbit-two"></div><div class="auth-glass"><span class="glass-icon">+</span><div><strong>Tudo começa por aqui</strong><small>Pacientes, equipe e agenda conectados</small></div><span class="glass-spark">✦</span></div></div>
+    <div class="auth-art-footer"><span class="auth-mini-cross">+</span><span>Conexões que fazem bem.</span><span class="auth-dot-grid" aria-hidden="true">···</span></div>
+  </div>
+  <div class="auth-panel">
+    <div class="auth-panel-top"><span class="auth-tag">COMECE POR AQUI</span><span class="auth-secure">Ambiente de demonstração</span></div>
+    <nav class="auth-tabs" aria-label="Acesso à conta"><a href="/admin/login">Entrar</a><a href="/admin/cadastro" class="selected" aria-current="page">Criar conta</a></nav>
+    <div class="auth-heading"><h2>Vamos criar<br />sua conta?</h2><p>Seu acesso administrativo à demonstração.</p></div>
+    <% if (errors.geral) { %><p class="error auth-error" role="alert"><%= errors.geral %></p><% } %>
+    <form method="post" class="form auth-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <div class="form-group"><label for="nome">Seu nome</label><input id="nome" name="nome" type="text" value="<%= form.nome || '' %>" placeholder="Como podemos chamar você?" autocomplete="name" required minlength="2" maxlength="150" <% if(errors.nome) { %>aria-invalid="true" aria-describedby="nome-error"<% } %> /><% if(errors.nome) { %><span class="error" id="nome-error" role="alert"><%= errors.nome %></span><% } %></div>
+      <div class="form-group"><label for="login">Escolha um login</label><input id="login" name="login" type="text" value="<%= form.login || '' %>" placeholder="Ex.: ana.silva" autocomplete="username" required minlength="3" maxlength="100" pattern="[A-Za-z0-9._\-]{3,100}" aria-describedby="login-help<%= errors.login ? ' login-error' : '' %>" <% if(errors.login) { %>aria-invalid="true"<% } %> /><small id="login-help" class="auth-field-help">Letras, números, ponto, hífen ou sublinhado.</small><% if(errors.login) { %><span class="error" id="login-error" role="alert"><%= errors.login %></span><% } %></div>
+      <div class="form-group"><label for="senha">Crie uma senha</label><div class="password-field"><input id="senha" name="senha" type="password" placeholder="Pelo menos 12 caracteres" autocomplete="new-password" required minlength="12" maxlength="128" aria-describedby="senha-help<%= errors.senha ? ' senha-error' : '' %>" <% if(errors.senha) { %>aria-invalid="true"<% } %> /><button type="button" class="password-toggle" data-toggle-password="senha" aria-controls="senha" aria-pressed="false">Mostrar</button></div><small id="senha-help" class="auth-field-help">Use de 12 a 128 caracteres.</small><% if(errors.senha) { %><span class="error" id="senha-error" role="alert"><%= errors.senha %></span><% } %></div>
+      <div class="form-group"><label for="confirmacao">Confirme sua senha</label><div class="password-field"><input id="confirmacao" name="confirmacao" type="password" placeholder="Digite a senha novamente" autocomplete="new-password" required minlength="12" maxlength="128" <% if(errors.confirmacao) { %>aria-invalid="true" aria-describedby="confirmacao-error"<% } %> /><button type="button" class="password-toggle" data-toggle-password="confirmacao" aria-controls="confirmacao" aria-pressed="false">Mostrar</button></div><% if(errors.confirmacao) { %><span class="error" id="confirmacao-error" role="alert"><%= errors.confirmacao %></span><% } %></div>
+      <button class="btn auth-submit" type="submit">Criar minha conta <span aria-hidden="true">↗</span></button>
+    </form>
+    <p class="auth-switch">Já tem uma conta? <a href="/admin/login">Entrar no sistema</a></p>
+  </div>
+</section>

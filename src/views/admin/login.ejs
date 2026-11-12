@@ -1,13 +1,23 @@
-<section class="login-shell">
-  <div class="login-story"><p class="eyebrow">BEM-VINDO À CLÍNICA</p><h1>Organizar o dia.<br />Cuidar de pessoas.</h1><p>Acesse o seu espaço para acompanhar a agenda, os pacientes e a equipe médica.</p><div class="login-mark" aria-hidden="true">+</div><span class="login-story-foot">Um só lugar. Toda a sua rotina.</span></div>
-  <div class="card login-card"><p class="eyebrow">ÁREA ADMINISTRATIVA</p><h2>Acesse sua conta</h2><p class="subtitle">Informe suas credenciais para continuar.</p>
-    <% if (errors.geral) { %><p class="error" role="alert"><%= errors.geral %></p><% } %>
-    <form method="post" class="form login-form">
+<section class="auth-shell" aria-label="Acesso ao sistema">
+  <div class="auth-art">
+    <a class="auth-brand" href="/"><span class="brand-logo" aria-hidden="true">+</span><span>Clínica Médica<small>CUIDADO EM CADA DETALHE</small></span></a>
+    <div class="auth-pitch"><span class="auth-kicker"><span></span> Sua rotina, em sintonia</span><h1>Mais tempo<br />para o que<br /> <em>realmente importa.</em></h1><p>Simplifique os atendimentos.<br />Aproxime pessoas e cuidado.</p></div>
+    <div class="auth-visual" aria-hidden="true"><div class="auth-orbit orbit-one"></div><div class="auth-orbit orbit-two"></div><div class="auth-glass"><span class="glass-icon">✓</span><div><strong>Uma agenda mais leve</strong><small>Organização em cada atendimento</small></div><span class="glass-spark">✦</span></div></div>
+    <div class="auth-art-footer"><span class="auth-mini-cross">+</span><span>Conexões que fazem bem.</span><span class="auth-dot-grid" aria-hidden="true">···</span></div>
+  </div>
+  <div class="auth-panel">
+    <div class="auth-panel-top"><span class="auth-tag">SEU ESPAÇO DE CUIDADO</span><span class="auth-secure"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Acesso protegido</span></div>
+    <% const registrationEnabled = typeof canRegister !== 'undefined' && canRegister; %>
+    <% if (registrationEnabled) { %><nav class="auth-tabs" aria-label="Acesso à conta"><a href="/admin/login" class="selected" aria-current="page">Entrar</a><a href="/admin/cadastro">Criar conta</a></nav><% } %>
+    <div class="auth-heading"><span class="auth-wave" aria-hidden="true">✦</span><h2>Que bom ter<br />você de volta.</h2><p>Acesse sua conta e organize o seu dia.</p></div>
+    <% if (errors.geral) { %><p class="error auth-error" role="alert"><%= errors.geral %></p><% } %>
+    <form method="post" class="form auth-form">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-      <div class="form-group"><label for="login">Login</label><input type="text" id="login" name="login" value="<%= form.login || '' %>" autocomplete="username" required maxlength="100" autofocus /><% if (errors.login) { %><span class="error" role="alert"><%= errors.login %></span><% } %></div>
-      <div class="form-group"><label for="senha">Senha</label><input type="password" id="senha" name="senha" autocomplete="current-password" required maxlength="128" /><% if (errors.senha) { %><span class="error" role="alert"><%= errors.senha %></span><% } %></div>
-      <button class="btn" type="submit">Entrar no sistema <span aria-hidden="true">→</span></button>
+      <div class="form-group"><label for="login">Seu login</label><input type="text" id="login" name="login" value="<%= form.login || '' %>" placeholder="Digite seu login" autocomplete="username" required maxlength="100" <% if(errors.login) { %>aria-invalid="true" aria-describedby="login-error"<% } %> /><% if (errors.login) { %><span class="error" id="login-error" role="alert"><%= errors.login %></span><% } %></div>
+      <div class="form-group"><label for="senha">Sua senha</label><div class="password-field"><input type="password" id="senha" name="senha" placeholder="Digite sua senha" autocomplete="current-password" required maxlength="128" <% if(errors.senha) { %>aria-invalid="true" aria-describedby="senha-error"<% } %> /><button type="button" class="password-toggle" data-toggle-password="senha" aria-controls="senha" aria-pressed="false">Mostrar</button></div><% if (errors.senha) { %><span class="error" id="senha-error" role="alert"><%= errors.senha %></span><% } %></div>
+      <button class="btn auth-submit" type="submit">Entrar no sistema <span aria-hidden="true">↗</span></button>
     </form>
-    <p class="login-help">O acesso é reservado à administração da clínica.</p>
+    <% if (registrationEnabled) { %><p class="auth-switch">Primeira vez por aqui? <a href="/admin/cadastro">Crie sua conta</a></p><% } %>
+    <div class="auth-panel-footer"><span class="auth-footer-line"></span><p>Organizar para cuidar melhor.</p><span class="auth-footer-line"></span></div>
   </div>
 </section>

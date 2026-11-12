@@ -71,7 +71,7 @@ test('fluxo completo com MySQL real', { skip: process.env.RUN_INTEGRATION !== '1
     await conn.execute('INSERT INTO Admins (nome,login,senha) VALUES (?,?,?)', ['Validação', login, await hashPassword(password)]);
     app = spawn(process.execPath, ['app.js'], {
       cwd: root, windowsHide: true,
-      env: { ...process.env, APP_PORT: String(port), DB_NAME: database, NODE_ENV: 'test', SESSION_SECRET: randomBytes(32).toString('hex') },
+      env: { ...process.env, APP_PORT: String(port), DB_NAME: database, NODE_ENV: 'test', DEMO_MODE: '0', SESSION_SECRET: randomBytes(32).toString('hex') },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     app.stdout.on('data', data => logs += data);
@@ -87,6 +87,7 @@ test('fluxo completo com MySQL real', { skip: process.env.RUN_INTEGRATION !== '1
     await t.test('pagina inicial, login e protecao das rotas', async () => {
       assert.equal((await request('/')).status, 200);
       assert.equal((await request('/admin/login')).status, 200);
+      assert.equal((await request('/admin/cadastro')).status, 403);
       for (const url of ['/admin/dashboard', '/pacientes', '/medicos', '/consultas', '/pacientes/novo', '/medicos/novo', '/consultas/novo']) {
         const response = await request(url, undefined, false);
         assert.equal(response.status, 302);
@@ -385,5 +386,53 @@ test('fluxo completo com MySQL real', { skip: process.env.RUN_INTEGRATION !== '1
       if (doctorId) await conn.execute('DELETE FROM Medicos WHERE idMedico = ?', [doctorId]);
       await conn.execute('DELETE FROM Admins WHERE login = ?', [login]);
     } finally { await conn.end(); }
+  }
+});
+
+test('cadastro de conta na demonstracao com MySQL real', { skip: process.env.RUN_INTEGRATION !== '1', timeout: 60000 }, async () => {
+  const mysql = (await import('mysql2/promise')).default;
+  const database = process.env.DB_NAME;
+  assert.match(database || '', /^[a-zA-Z0-9_]+_test$/);
+  const conn = await mysql.createConnection({ host: process.env.DB_HOST || '127.0.0.1', port: Number(process.env.DB_PORT || 3306),
+    user: process.env.DB_USER || 'root', password: process.env.DB_PASS || '', database });
+  const root = fileURLToPath(new URL('../', import.meta.url));
+  const login = 'cadastro.' + randomBytes(8).toString('hex');
+  const password = 'Teste-' + randomBytes(14).toString('hex');
+  const port = Number(process.env.INTEGRATION_PORT || 33318);
+  let app, logs = '', cookie = '', csrf = '';
+  const request = async (url, data) => {
+    const r = await fetch('http://127.0.0.1:' + port + url, { method: data ? 'POST' : 'GET', redirect: 'manual',
+      headers: { ...(cookie ? { Cookie: cookie } : {}), ...(data ? { 'Content-Type':'application/x-www-form-urlencoded' } : {}) },
+      ...(data ? { body: new URLSearchParams({ ...data, _csrf: csrf }) } : {}) });
+    const text = await r.text();
+    const newCookie = r.headers.get('set-cookie'); if (newCookie) cookie = newCookie.split(';')[0];
+    csrf = text.match(/name="_csrf" value="([^"]+)"/)?.[1] || csrf;
+    return { status: r.status, location: r.headers.get('location'), text };
+  };
+  try {
+    app = spawn(process.execPath, ['app.js'], { cwd: root, windowsHide:true, stdio:['ignore','pipe','pipe'],
+      env: { ...process.env, DB_NAME: database, NODE_ENV:'test', DEMO_MODE:'1', APP_PORT:String(port), SESSION_SECRET:randomBytes(32).toString('hex') } });
+    app.stdout.on('data', chunk => logs += chunk); app.stderr.on('data', chunk => logs += chunk);
+    for (let i=0; i<50 && !logs.includes('Servidor rodando'); i++) await new Promise(r=>setTimeout(r,100));
+    assert.ok(logs.includes('Servidor rodando'), logs);
+    assert.equal((await request('/admin/cadastro')).status, 200);
+    const denied = await fetch('http://127.0.0.1:' + port + '/admin/cadastro', {
+      method:'POST', headers:{ Cookie:cookie, 'Content-Type':'application/x-www-form-urlencoded' }, body:new URLSearchParams({ login }) });
+    assert.equal(denied.status,403); await denied.text();
+    const form = { nome:'Conta fictícia de teste', login, senha:password, confirmacao:password };
+    assert.equal((await request('/admin/cadastro', { ...form, confirmacao:'diferente' })).status,400);
+    const created = await request('/admin/cadastro',form);
+    assert.equal(created.status,302); assert.equal(created.location,'/admin/login');
+    assert.equal((await request('/admin/dashboard')).location,'/admin/login');
+    const page = await request('/admin/login');
+    assert.ok(page.text.includes('Conta criada com sucesso'));
+    assert.equal((await request('/admin/cadastro',form)).status,409);
+    const [[record]] = await conn.execute('SELECT senha FROM Admins WHERE login=?',[login]);
+    assert.ok(record.senha.startsWith('scrypt$')); assert.notEqual(record.senha,password);
+    assert.equal((await request('/admin/login',{login,senha:password})).status,302);
+    assert.equal((await request('/admin/dashboard')).status,200);
+  } finally {
+    if (app && app.exitCode === null) { const exited=once(app,'exit');app.kill();await exited; }
+    await conn.execute('DELETE FROM Admins WHERE login=?',[login]);await conn.end();
   }
 });

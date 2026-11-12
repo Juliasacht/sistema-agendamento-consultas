@@ -21,3 +21,14 @@ document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && document.body.classList.contains('nav-open')) { closeMenu(); menuButton?.focus(); }
 });
 document.querySelectorAll('.nav-links a').forEach(link => link.addEventListener('click', closeMenu));
+
+document.addEventListener('click', event => {
+  const button = event.target.closest?.('[data-toggle-password]');
+  if (!button) return;
+  const input = document.getElementById(button.dataset.togglePassword);
+  if (!input) return;
+  const visible = input.type === 'password';
+  input.type = visible ? 'text' : 'password';
+  button.textContent = visible ? 'Ocultar' : 'Mostrar';
+  button.setAttribute('aria-pressed', String(visible));
+});
